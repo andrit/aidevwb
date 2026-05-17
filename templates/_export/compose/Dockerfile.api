@@ -1,0 +1,20 @@
+# {{PROJECT_NAME}} — API Server
+# Derived from AI Dev Workbench mcp-server.
+# Stripped of workbench-specific code (MCP bridge, project registry).
+
+FROM node:22-alpine AS builder
+WORKDIR /app
+COPY api/package*.json ./
+RUN npm ci
+COPY api/src/ ./src/
+COPY api/tsconfig.json ./
+RUN npm run build
+
+FROM node:22-alpine
+WORKDIR /app
+RUN apk add --no-cache wget
+COPY api/package*.json ./
+RUN npm ci --omit=dev
+COPY --from=builder /app/dist ./dist
+EXPOSE 3100
+CMD ["node", "dist/index.js"]

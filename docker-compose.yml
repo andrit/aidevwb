@@ -1,0 +1,311 @@
+# ╔══════════════════════════════════════════════════════════════╗
+# ║  AI Dev Workbench — Docker Compose                          ║
+# ║                                                              ║
+# ║  Core:    docker compose up -d                               ║
+# ║  + Neo4j: docker compose --profile neo4j up -d               ║
+# ║  + Studio: docker compose --profile studio up -d             ║
+# ║  All:     docker compose --profile neo4j --profile studio up ║
+# ╚══════════════════════════════════════════════════════════════╝
+
+services:
+
+  # ═══════════════════════════════════════════════════════════
+  #  CLAUDE CODE — your interactive AI dev environment
+  # ═══════════════════════════════════════════════════════════
+  claude-code:
+    build:
+      context: .
+      dockerfile: apps/claude-code/Dockerfile
+    container_name: claude-code
+    stdin_open: true
+    tty: true
+    volumes:
+      - ${PROJECT_DIR:-./workspace}:/workspace
+      - claude-auth:/home/user/.claude
+      - ./configs/claude/commands:/workspace/.claude/commands:ro
+      - ./configs/claude/settings.json:/workspace/.claude/settings.json:ro
+      - ./configs/mcp/mcp-servers.json:/opt/mcp-servers.json:ro
+      - ./documents:/workspace/documents
+    environment:
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
+      - EMBEDDING_MODEL=${EMBEDDING_MODEL:-voyage/voyage-3}
+      - EMBEDDING_DIMENSIONS=${EMBEDDING_DIMENSIONS:-1024}
+      - CLAUDE_MODEL=${CLAUDE_MODEL:-claude-sonnet-4-20250514}
+      - API_URL=http://mcp-server:3100
+      - WORKBENCH_PROJECT=${WORKBENCH_PROJECT:-}
+    networks:
+      - workbench
+    depends_on:
+      mcp-server:
+        condition: service_healthy
+    entrypoint: ["tail", "-f", "/dev/null"]
+
+  # ═══════════════════════════════════════════════════════════
+  #  MCP SERVER — TypeScript + Fastify + Zod orchestration
+  #  Exposes REST API (:3100) + MCP stdio bridge
+  # ═══════════════════════════════════════════════════════════
+  mcp-server:
+    build:
+      context: ./apps/mcp-server
+      dockerfile: Dockerfile
+    container_name: mcp-server
+    ports:
+      - "${API_PORT:-3100}:3100"
+    volumes:
+      - ./documents:/workspace/documents
+      - ./supabase/migrations:/app/migrations:ro
+      - ./templates:/app/templates:ro
+    environment:
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
+      - PG_HOST=supabase-db
+      - PG_PORT=5432
+      - PG_USER=postgres
+      - PG_PASSWORD=${POSTGRES_PASSWORD}
+      - PG_REGISTRY_DB=workbench
+      - EMBEDDING_MODEL=${EMBEDDING_MODEL:-voyage/voyage-3}
+      - EMBEDDING_DIMENSIONS=${EMBEDDING_DIMENSIONS:-1024}
+      - CLAUDE_MODEL=${CLAUDE_MODEL:-claude-sonnet-4-20250514}
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379}
+      - OTEL_EXPORTER_OTLP_ENDPOINT=${OTEL_EXPORTER_OTLP_ENDPOINT:-http://otel-collector:4318}
+      - OTEL_SERVICE_NAME=mcp-server
+      - PORT=3100
+    networks:
+      - workbench
+    depends_on:
+      supabase-db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3100/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # ═══════════════════════════════════════════════════════════
+  #  RAG WORKER — Python scripts for embedding/ingestion/ML
+  #  Lean, no framework. Individual scripts called via queue.
+  # ═══════════════════════════════════════════════════════════
+  rag-worker:
+    build:
+      context: ./apps/rag-worker
+      dockerfile: Dockerfile
+    container_name: rag-worker
+    volumes:
+      - ./documents:/workspace/documents
+      - rag-storage:/app/rag_storage
+    environment:
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
+      - PG_HOST=supabase-db
+      - PG_PORT=5432
+      - PG_USER=postgres
+      - PG_PASSWORD=${POSTGRES_PASSWORD}
+      - SUPABASE_DB_URL=postgresql://postgres:${POSTGRES_PASSWORD}@supabase-db:5432/postgres
+      - EMBEDDING_MODEL=${EMBEDDING_MODEL:-voyage/voyage-3}
+      - EMBEDDING_DIMENSIONS=${EMBEDDING_DIMENSIONS:-1024}
+      - CLAUDE_MODEL=${CLAUDE_MODEL:-claude-sonnet-4-20250514}
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379}
+      - OTEL_EXPORTER_OTLP_ENDPOINT=${OTEL_EXPORTER_OTLP_ENDPOINT:-http://otel-collector:4318}
+      - OTEL_SERVICE_NAME=rag-worker
+    networks:
+      - workbench
+    depends_on:
+      supabase-db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: ["python", "-m", "lib.worker"]
+
+  # ═══════════════════════════════════════════════════════════
+  #  SUPABASE — Self-hosted PostgreSQL + pgvector + PostgREST
+  # ═══════════════════════════════════════════════════════════
+  supabase-db:
+    image: supabase/postgres:15.6.1.143
+    container_name: supabase-db
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: postgres
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXP: 3600
+    volumes:
+      - supabase-db-data:/var/lib/postgresql/data
+      - ./supabase/migrations:/docker-entrypoint-initdb.d
+    networks:
+      - workbench
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  supabase-rest:
+    image: postgrest/postgrest:v12.2.3
+    container_name: supabase-rest
+    environment:
+      PGRST_DB_URI: postgresql://postgres:${POSTGRES_PASSWORD:-postgres}@supabase-db:5432/postgres
+      PGRST_DB_SCHEMAS: public,storage
+      PGRST_DB_ANON_ROLE: anon
+      PGRST_JWT_SECRET: ${JWT_SECRET}
+      PGRST_DB_USE_LEGACY_GUCS: "false"
+    networks:
+      - workbench
+    depends_on:
+      supabase-db:
+        condition: service_healthy
+
+  supabase-kong:
+    image: kong:2.8.1
+    container_name: supabase-kong
+    ports:
+      - "8000:8000"
+    environment:
+      KONG_DATABASE: "off"
+      KONG_DECLARATIVE_CONFIG: /var/lib/kong/kong.yml
+      KONG_DNS_ORDER: LAST,A,CNAME
+      KONG_PLUGINS: request-transformer,cors,key-auth,acl,basic-auth
+    volumes:
+      - ./configs/supabase/kong.yml:/var/lib/kong/kong.yml:ro
+    networks:
+      - workbench
+    depends_on:
+      - supabase-rest
+
+  # ═══════════════════════════════════════════════════════════
+  #  REDIS — Job queue (BullMQ) + caching
+  # ═══════════════════════════════════════════════════════════
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - workbench
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+  # ═══════════════════════════════════════════════════════════
+  #  OBSERVABILITY — OpenTelemetry + Tempo + Grafana
+  # ═══════════════════════════════════════════════════════════
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.98.0
+    container_name: otel-collector
+    volumes:
+      - ./configs/otel/otel-collector-config.yml:/etc/otelcol-contrib/config.yaml:ro
+    ports:
+      - "4318:4318"     # OTLP HTTP receiver
+    networks:
+      - workbench
+
+  tempo:
+    image: grafana/tempo:2.4.1
+    container_name: tempo
+    command: ["-config.file=/etc/tempo.yaml"]
+    volumes:
+      - ./configs/otel/tempo.yml:/etc/tempo.yaml:ro
+      - tempo-data:/tmp/tempo
+    networks:
+      - workbench
+
+  grafana:
+    image: grafana/grafana:10.4.2
+    container_name: grafana
+    ports:
+      - "3200:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Admin
+    volumes:
+      - ./configs/grafana/datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml:ro
+      - ./configs/grafana/dashboards/provider.yml:/etc/grafana/provisioning/dashboards/provider.yml:ro
+      - ./configs/grafana/dashboards/json:/etc/grafana/provisioning/dashboards/json:ro
+      - grafana-data:/var/lib/grafana
+    networks:
+      - workbench
+    depends_on:
+      - tempo
+
+  # ═══════════════════════════════════════════════════════════
+  #  SUPABASE STUDIO — Web UI for database management
+  #  Optional: docker compose --profile studio up -d
+  # ═══════════════════════════════════════════════════════════
+  supabase-studio:
+    image: supabase/studio:20240422-5cf8f30
+    container_name: supabase-studio
+    profiles: ["studio"]
+    ports:
+      - "3001:3000"
+    environment:
+      STUDIO_PG_META_URL: http://supabase-meta:8080
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      SUPABASE_URL: http://supabase-kong:8000
+      SUPABASE_REST_URL: http://supabase-kong:8000/rest/v1/
+      SUPABASE_ANON_KEY: ${ANON_KEY}
+      SUPABASE_SERVICE_KEY: ${SERVICE_ROLE_KEY}
+    networks:
+      - workbench
+    depends_on:
+      - supabase-meta
+
+  supabase-meta:
+    image: supabase/postgres-meta:v0.80.0
+    container_name: supabase-meta
+    profiles: ["studio"]
+    environment:
+      PG_META_PORT: 8080
+      PG_META_DB_HOST: supabase-db
+      PG_META_DB_PORT: 5432
+      PG_META_DB_NAME: postgres
+      PG_META_DB_USER: postgres
+      PG_META_DB_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+    networks:
+      - workbench
+    depends_on:
+      supabase-db:
+        condition: service_healthy
+
+  # ═══════════════════════════════════════════════════════════
+  #  NEO4J — Graph database for GraphRAG
+  #  Optional: docker compose --profile neo4j up -d
+  # ═══════════════════════════════════════════════════════════
+  neo4j:
+    image: neo4j:5.18-community
+    container_name: neo4j
+    profiles: ["neo4j"]
+    ports:
+      - "7474:7474"   # Browser
+      - "7687:7687"   # Bolt
+    environment:
+      NEO4J_AUTH: neo4j/${POSTGRES_PASSWORD:-password}
+      NEO4J_PLUGINS: '["apoc"]'
+    volumes:
+      - neo4j-data:/data
+    networks:
+      - workbench
+
+volumes:
+  claude-auth:
+  supabase-db-data:
+  redis-data:
+  rag-storage:
+  tempo-data:
+  grafana-data:
+  neo4j-data:
+
+networks:
+  workbench:
+    driver: bridge
+    name: workbench-network

@@ -1,0 +1,6 @@
+{
+  "type": "fullstack",
+  "description": "Full-stack web application",
+  "mcp_tools": ["rag_ingest", "rag_query", "rag_status", "project_test"],
+  "roadmap": "1. Scaffold project structure\n2. Database schema design\n3. API routes (CRUD)\n4. Frontend pages / components\n5. Authentication\n6. Tests (unit + integration)\n7. Deploy"
+}

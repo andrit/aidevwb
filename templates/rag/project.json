@@ -1,0 +1,6 @@
+{
+  "type": "rag",
+  "description": "RAG application — knowledgebase-powered search and answers",
+  "mcp_tools": ["rag_ingest", "rag_query", "rag_status", "rag_reindex", "rag_eval", "project_test", "agent_remember", "agent_recall"],
+  "roadmap": "1. Define your document corpus\n2. Ingest and verify with /status\n3. Test retrieval quality with /eval\n4. Tune search weights and chunk sizes\n5. Build the query interface (API, UI, or chatbot)\n6. Add conversation history if multi-turn\n7. Monitor with Grafana dashboards\n8. Export stack for production"
+}

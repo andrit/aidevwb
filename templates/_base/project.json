@@ -1,0 +1,11 @@
+{
+  "version": "1.0",
+  "mcp_tools": ["rag_ingest", "rag_query", "rag_status", "rag_reindex", "project_test"],
+  "search_config": {
+    "vector_weight": 0.7,
+    "text_weight": 0.3,
+    "match_threshold": 0.5,
+    "chunk_size": 500,
+    "chunk_overlap": 50
+  }
+}

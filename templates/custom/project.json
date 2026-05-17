@@ -1,0 +1,10 @@
+{
+  "type": "custom",
+  "description": "Custom project — all tools available, no type-specific guidance",
+  "mcp_tools": [
+    "rag_ingest", "rag_query", "rag_status", "rag_reindex", "rag_eval", "project_test",
+    "agent_remember", "agent_recall", "agent_forget", "agent_memories",
+    "conversation_create", "conversation_list", "conversation_get", "conversation_append"
+  ],
+  "roadmap": "1. Define what you're building\n2. Set up the project structure\n3. Build iteratively with Claude Code\n4. Test as you go with /test\n5. Ingest relevant docs into the knowledgebase as needed\n6. Ship when ready"
+}

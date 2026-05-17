@@ -1,0 +1,20 @@
+# ═══════════════════════════════════════════════════════════
+# Dev Environment Variables
+#
+# Copy to terraform.tfvars and fill in your values:
+#   cp terraform.tfvars.example terraform.tfvars
+#
+# NEVER commit terraform.tfvars — it contains secrets.
+# ═══════════════════════════════════════════════════════════
+
+project_name = "ai-workbench"
+aws_region   = "us-east-1"
+
+# API Keys (sensitive — from your .env file)
+anthropic_api_key  = "sk-ant-..."
+openrouter_api_key = "sk-or-..."
+postgres_password  = "your-strong-password-here"
+
+# Embedding config (must match your local workbench .env)
+embedding_model      = "voyage/voyage-3"
+embedding_dimensions = 1024

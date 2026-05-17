@@ -1,0 +1,92 @@
+{
+  "dashboard": {
+    "id": null,
+    "uid": "workbench-overview",
+    "title": "AI Dev Workbench — Overview",
+    "tags": ["workbench", "rag"],
+    "timezone": "browser",
+    "refresh": "30s",
+    "time": { "from": "now-1h", "to": "now" },
+    "panels": [
+      {
+        "id": 1,
+        "title": "Recent Traces",
+        "type": "table",
+        "gridPos": { "h": 8, "w": 24, "x": 0, "y": 0 },
+        "datasource": { "type": "tempo", "uid": "tempo" },
+        "targets": [
+          {
+            "refId": "A",
+            "queryType": "nativeSearch",
+            "serviceName": "mcp-server",
+            "limit": 20
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {},
+          "overrides": []
+        }
+      },
+      {
+        "id": 2,
+        "title": "Trace Duration Distribution",
+        "type": "histogram",
+        "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+        "datasource": { "type": "tempo", "uid": "tempo" },
+        "targets": [
+          {
+            "refId": "A",
+            "queryType": "nativeSearch",
+            "serviceName": "mcp-server",
+            "limit": 100
+          }
+        ]
+      },
+      {
+        "id": 3,
+        "title": "RAG Worker Traces",
+        "type": "table",
+        "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+        "datasource": { "type": "tempo", "uid": "tempo" },
+        "targets": [
+          {
+            "refId": "A",
+            "queryType": "nativeSearch",
+            "serviceName": "rag-worker",
+            "limit": 20
+          }
+        ]
+      },
+      {
+        "id": 4,
+        "title": "Knowledgebase Stats",
+        "type": "stat",
+        "gridPos": { "h": 4, "w": 24, "x": 0, "y": 16 },
+        "description": "Refresh manually: curl http://mcp-server:3100/status",
+        "options": {
+          "textMode": "value_and_name",
+          "colorMode": "background",
+          "graphMode": "none",
+          "justifyMode": "center"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "color": { "mode": "thresholds" },
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                { "color": "blue", "value": null },
+                { "color": "green", "value": 1 }
+              ]
+            }
+          }
+        },
+        "targets": []
+      }
+    ],
+    "annotations": { "list": [] },
+    "schemaVersion": 39,
+    "version": 1
+  },
+  "overwrite": true
+}

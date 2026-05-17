@@ -1,0 +1,6 @@
+{
+  "type": "data-pipeline",
+  "description": "Data pipeline, ETL, or analytics processing",
+  "mcp_tools": ["rag_ingest", "rag_query", "project_test"],
+  "roadmap": "1. Define data sources and destinations\n2. Schema design for staging + final tables\n3. Extraction scripts\n4. Transformation logic (clean, validate, enrich)\n5. Load into destination\n6. Scheduling (cron, queue, or event-driven)\n7. Monitoring + alerting\n8. Tests (data quality assertions)"
+}

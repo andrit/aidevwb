@@ -1,0 +1,6 @@
+{
+  "type": "pwa",
+  "description": "Progressive Web App — installable, offline-capable",
+  "mcp_tools": ["rag_ingest", "rag_query", "rag_status", "project_test"],
+  "roadmap": "1. Scaffold with service worker + manifest\n2. App shell architecture\n3. Caching strategy (network-first, cache-first, stale-while-revalidate)\n4. Offline fallback\n5. Push notifications (optional)\n6. Lighthouse audit + optimization\n7. Deploy"
+}

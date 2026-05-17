@@ -1,0 +1,17 @@
+# {{PROJECT_NAME}} — RAG Worker
+# Derived from AI Dev Workbench rag-worker.
+
+FROM python:3.12-slim
+WORKDIR /app
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential libmagic1 poppler-utils tesseract-ocr curl \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY worker/requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY worker/scripts/ ./scripts/
+COPY worker/lib/ ./lib/
+
+CMD ["python", "-m", "lib.worker"]

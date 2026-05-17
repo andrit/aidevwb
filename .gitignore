@@ -1,0 +1,18 @@
+.env
+node_modules/
+dist/
+__pycache__/
+*.pyc
+.venv/
+rag_storage/
+documents/*
+!documents/.gitkeep
+workspace/*
+!workspace/.gitkeep
+supabase/data/
+*.log
+.DS_Store
+
+# Database backups are tracked by default so they travel with the repo.
+# Uncomment the next line if backups get too large for your git host:
+# backups/*.sql.gz

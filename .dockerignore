@@ -1,0 +1,9 @@
+apps/mcp-server/node_modules
+apps/mcp-server/dist
+apps/rag-worker/__pycache__
+configs/mcp/bridge/node_modules
+supabase/data
+workspace
+.git
+.env
+*.log

@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json.schemastore.org/mcp-config",
+  "mcpServers": {
+    "workbench": {
+      "command": "node",
+      "args": ["/opt/mcp-bridge/index.js"],
+      "env": {
+        "API_URL": "http://mcp-server:3100"
+      },
+      "description": "AI Dev Workbench — RAG ingest/query/status/reindex tools",
+      "autostart": true
+    },
+    "supabase": {
+      "transport": "sse",
+      "url": "https://mcp.supabase.com/mcp",
+      "description": "Supabase MCP — direct database operations, SQL queries, table management",
+      "autostart": false,
+      "notes": "Only needed for direct DB access. The workbench bridge handles normal RAG operations."
+    },
+    "filesystem": {
+      "command": "npx",
+      "args": ["-y", "@anthropic-ai/mcp-filesystem"],
+      "description": "Filesystem MCP — read/write files in the workspace",
+      "autostart": false,
+      "notes": "Claude Code has built-in file access; enable this for structured file operations."
+    }
+  }
+}

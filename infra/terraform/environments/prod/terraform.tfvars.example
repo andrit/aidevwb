@@ -1,0 +1,21 @@
+# ═══════════════════════════════════════════════════════════
+# Prod Environment Variables
+#
+# Copy to terraform.tfvars and fill in your values:
+#   cp terraform.tfvars.example terraform.tfvars
+#
+# NEVER commit terraform.tfvars — it contains secrets.
+# Use a secrets manager or CI/CD pipeline for production.
+# ═══════════════════════════════════════════════════════════
+
+project_name = "ai-workbench"
+aws_region   = "us-east-1"
+
+# API Keys (sensitive)
+anthropic_api_key  = "sk-ant-..."
+openrouter_api_key = "sk-or-..."
+postgres_password  = "use-a-generated-32-char-password"
+
+# Embedding config (must match what your data was indexed with)
+embedding_model      = "voyage/voyage-3"
+embedding_dimensions = 1024

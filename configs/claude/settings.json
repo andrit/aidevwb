@@ -1,0 +1,20 @@
+{
+  "hooks": {
+    "onSessionStart": [
+      "Check that the workbench services are running by calling /status via the rag_status MCP tool",
+      "Show current knowledgebase state and queue depth"
+    ],
+    "onFileChange": {
+      "documents/**": [
+        "A file changed in documents/ — suggest running /ingest <filepath>"
+      ]
+    }
+  },
+  "permissions": {
+    "allow": [
+      "curl http://mcp-server:3100/*",
+      "python3 /workspace/scripts/*",
+      "node /workspace/apps/mcp-server/dist/*"
+    ]
+  }
+}
