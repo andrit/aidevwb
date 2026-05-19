@@ -1,0 +1,11 @@
+{
+  "type": "multi-agent",
+  "description": "Multi-agent system — coordinated agents with orchestration patterns",
+  "mcp_tools": [
+    "rag_ingest", "rag_query", "rag_status", "rag_eval", "project_test",
+    "agent_remember", "agent_recall", "agent_forget", "agent_memories",
+    "conversation_create", "conversation_list", "conversation_get", "conversation_append",
+    "bus_publish", "bus_read", "bus_channels"
+  ],
+  "roadmap": "1. Define the team: how many agents, what roles\n2. Choose an orchestration pattern (sequential, parallel, hierarchical, consensus)\n3. Implement each agent as an async function\n4. Wire agents into the pattern\n5. Test with the message bus (observe inter-agent communication)\n6. Add memory for cross-session state\n7. Monitor with the Agent Trace Viewer in Grafana\n8. Tune: adjust roles, prompts, delegation logic\n9. Ship"
+}

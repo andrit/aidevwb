@@ -1,0 +1,152 @@
+{
+  "dashboard": {
+    "id": null,
+    "uid": "agent-traces",
+    "title": "Agent Trace Viewer",
+    "tags": ["workbench", "agent", "traces"],
+    "timezone": "browser",
+    "refresh": "10s",
+    "time": { "from": "now-30m", "to": "now" },
+    "templating": {
+      "list": [
+        {
+          "name": "project",
+          "type": "textbox",
+          "current": { "text": "", "value": "" },
+          "label": "Project"
+        }
+      ]
+    },
+    "panels": [
+      {
+        "id": 1,
+        "title": "Agent Operations Timeline",
+        "description": "Recent traces showing agent tool calls, RAG queries, memory operations, and LLM calls. Click a trace to see the full span tree.",
+        "type": "table",
+        "gridPos": { "h": 10, "w": 24, "x": 0, "y": 0 },
+        "datasource": { "type": "tempo", "uid": "tempo" },
+        "targets": [
+          {
+            "refId": "A",
+            "queryType": "nativeSearch",
+            "serviceName": "mcp-server",
+            "limit": 30
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "custom": { "align": "auto" }
+          },
+          "overrides": [
+            {
+              "matcher": { "id": "byName", "options": "Duration" },
+              "properties": [
+                { "id": "custom.width", "value": 120 },
+                { "id": "unit", "value": "ns" }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "id": 2,
+        "title": "Operation Latency — RAG Pipeline",
+        "description": "Time breakdown: embedding, database search, LLM generation. Shows where time is spent in the RAG pipeline.",
+        "type": "barchart",
+        "gridPos": { "h": 8, "w": 12, "x": 0, "y": 10 },
+        "datasource": { "type": "tempo", "uid": "tempo" },
+        "targets": [
+          {
+            "refId": "A",
+            "queryType": "nativeSearch",
+            "serviceName": "mcp-server",
+            "search": "rag.hybrid_search",
+            "limit": 50
+          }
+        ],
+        "options": {
+          "orientation": "horizontal",
+          "showValue": "always",
+          "stacking": "none"
+        }
+      },
+      {
+        "id": 3,
+        "title": "Agent Tool Calls",
+        "description": "Which tools agents are calling and how often. Filter by project using the template variable.",
+        "type": "table",
+        "gridPos": { "h": 8, "w": 12, "x": 12, "y": 10 },
+        "datasource": { "type": "tempo", "uid": "tempo" },
+        "targets": [
+          {
+            "refId": "A",
+            "queryType": "nativeSearch",
+            "serviceName": "mcp-server",
+            "search": "workbench.category=agent",
+            "limit": 50
+          }
+        ]
+      },
+      {
+        "id": 4,
+        "title": "Memory Operations",
+        "description": "Agent memory reads and writes. Shows which keys are being accessed.",
+        "type": "table",
+        "gridPos": { "h": 8, "w": 12, "x": 0, "y": 18 },
+        "datasource": { "type": "tempo", "uid": "tempo" },
+        "targets": [
+          {
+            "refId": "A",
+            "queryType": "nativeSearch",
+            "serviceName": "mcp-server",
+            "search": "workbench.category=memory",
+            "limit": 30
+          }
+        ]
+      },
+      {
+        "id": 5,
+        "title": "LLM Call Performance",
+        "description": "Token usage and latency for Claude API calls. Tracks input/output tokens per call.",
+        "type": "table",
+        "gridPos": { "h": 8, "w": 12, "x": 12, "y": 18 },
+        "datasource": { "type": "tempo", "uid": "tempo" },
+        "targets": [
+          {
+            "refId": "A",
+            "queryType": "nativeSearch",
+            "serviceName": "mcp-server",
+            "search": "workbench.category=llm",
+            "limit": 30
+          }
+        ]
+      },
+      {
+        "id": 6,
+        "title": "Error Traces",
+        "description": "Traces with errors — failed tool calls, API timeouts, search failures.",
+        "type": "table",
+        "gridPos": { "h": 8, "w": 24, "x": 0, "y": 26 },
+        "datasource": { "type": "tempo", "uid": "tempo" },
+        "targets": [
+          {
+            "refId": "A",
+            "queryType": "nativeSearch",
+            "serviceName": "mcp-server",
+            "search": "status=error",
+            "limit": 20
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": { "mode": "fixed", "fixedColor": "red" }
+          }
+        }
+      }
+    ],
+    "annotations": { "list": [] },
+    "schemaVersion": 39,
+    "version": 1
+  },
+  "overwrite": true
+}

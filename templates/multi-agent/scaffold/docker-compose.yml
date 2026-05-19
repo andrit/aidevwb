@@ -1,0 +1,26 @@
+# {{PROJECT_NAME}} — Multi-Agent System
+# Connects to the workbench network to access the message bus, RAG API, and memory.
+#
+# Usage:
+#   docker compose run agent sequential "Your task description"
+#   docker compose run agent parallel "Your task description"
+#   docker compose run agent hierarchical "Your task description"
+#   docker compose run agent consensus "Your task description"
+
+services:
+  agent:
+    build: .
+    container_name: {{PROJECT_NAME}}-agents
+    environment:
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - WORKBENCH_API=http://mcp-server:3100
+      - WORKBENCH_PROJECT={{PROJECT_NAME}}
+      - CLAUDE_MODEL=${CLAUDE_MODEL:-claude-sonnet-4-20250514}
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318
+      - OTEL_SERVICE_NAME={{PROJECT_NAME}}-agents
+    networks:
+      - workbench-network
+
+networks:
+  workbench-network:
+    external: true

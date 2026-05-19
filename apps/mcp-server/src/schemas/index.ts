@@ -13,6 +13,8 @@ export * from "./conversation.js";
 export * from "./memory.js";
 export * from "./eval.js";
 export * from "./export.js";
+export * from "./bus.js";
+export * from "./agent-eval.js";
 
 /**
  * Convert a Zod schema to JSON Schema for MCP tool definitions.

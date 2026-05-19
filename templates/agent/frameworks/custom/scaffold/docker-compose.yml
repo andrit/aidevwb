@@ -1,0 +1,22 @@
+# {{PROJECT_NAME}} — Agent Runtime
+# Connects to the workbench network to access the RAG API.
+#
+# Usage:
+#   docker compose up agent -- "Your question or task"
+
+services:
+  agent:
+    build: .
+    container_name: {{PROJECT_NAME}}-agent
+    environment:
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - WORKBENCH_API=http://mcp-server:3100
+      - WORKBENCH_PROJECT={{PROJECT_NAME}}
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318
+      - OTEL_SERVICE_NAME={{PROJECT_NAME}}-agent
+    networks:
+      - workbench-network
+
+networks:
+  workbench-network:
+    external: true

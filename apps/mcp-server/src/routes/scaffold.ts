@@ -63,7 +63,7 @@ export async function registerScaffoldRoutes(
     // Auto-ingest seed docs (only for new projects, not reconnects)
     let seedResult = { ingested: 0, errors: [] as string[] };
     if (scaffoldResult.seedDocsFound > 0 && project && scaffoldResult.mode !== "reconnect") {
-      seedResult = await ingestSeedDocs(parsed.data.name, parsed.data.type);
+      seedResult = await ingestSeedDocs(parsed.data.name, parsed.data.type, parsed.data.framework);
     }
 
     return {
@@ -101,9 +101,11 @@ export async function registerScaffoldRoutes(
    */
   app.get("/scaffold/seed-docs/:type", async (request) => {
     const { type } = request.params as { type: string };
-    const docs = await listSeedDocs(type);
+    const { framework } = request.query as { framework?: string };
+    const docs = await listSeedDocs(type, framework);
     return {
       type,
+      framework: framework || null,
       count: docs.length,
       files: docs.map((f) => f.split("/").pop()),
     };

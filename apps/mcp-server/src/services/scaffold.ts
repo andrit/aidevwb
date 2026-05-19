@@ -13,6 +13,7 @@ import { readFile, writeFile, mkdir, copyFile, readdir, access } from "fs/promis
 import { join, basename } from "path";
 import { scanProjectDirectory, readExistingClaudeMd, determineMode } from "../lib/scanner.js";
 import { renderTemplate, deepMerge } from "../lib/templates.js";
+import { resolveFramework, frameworkLabel } from "../lib/frameworks.js";
 import type { ScanResult } from "../lib/scanner.js";
 
 const TEMPLATES_DIR = "/app/templates";
@@ -90,7 +91,7 @@ export async function scaffoldProject(
   }
 
   // Count seed docs (they'll be ingested separately via the API)
-  result.seedDocsFound = await countSeedDocs(opts.type);
+  result.seedDocsFound = await countSeedDocs(opts.type, opts.framework);
 
   return result;
 }
@@ -103,10 +104,12 @@ async function handleScaffold(
   config: Record<string, unknown>,
   result: ScaffoldResult
 ): Promise<void> {
+  const framework = resolveFramework(opts.framework);
   const vars = {
     PROJECT_NAME: opts.name,
     PROJECT_DESCRIPTION: (config.description as string) || `${opts.type} project`,
     ROADMAP: (config.roadmap as string) || "Define your development plan here.",
+    FRAMEWORK: frameworkLabel(framework),
   };
 
   // Write CLAUDE.md from base template
@@ -116,13 +119,22 @@ async function handleScaffold(
     await writeFile(join(opts.directory, "CLAUDE.md"), rendered);
     result.filesCreated.push("CLAUDE.md");
   } catch {
-    // Template not found — skip
     result.filesSkipped.push("CLAUDE.md (template not found)");
   }
 
   // Create documents/ directory for RAG source files
   await mkdir(join(opts.directory, "documents"), { recursive: true });
   result.filesCreated.push("documents/");
+
+  // For agent projects: copy framework-specific scaffold files
+  if (opts.type === "agent") {
+    await copyFrameworkScaffold(opts.directory, framework, vars, result);
+  }
+
+  // For multi-agent projects: copy patterns library + scaffold files
+  if (opts.type === "multi-agent") {
+    await copyTypeScaffold(opts.directory, "multi-agent", vars, result);
+  }
 }
 
 /**
@@ -210,7 +222,69 @@ async function loadProjectConfig(type: string): Promise<Record<string, unknown>>
 /**
  * List seed doc files for a project type.
  */
-export async function listSeedDocs(type: string): Promise<string[]> {
+/**
+ * Copy framework-specific scaffold files into the project directory.
+ * Renders {{VARIABLE}} placeholders in file contents.
+ */
+async function copyFrameworkScaffold(
+  projectDir: string,
+  framework: string,
+  vars: Record<string, string>,
+  result: ScaffoldResult
+): Promise<void> {
+  const scaffoldDir = join(TEMPLATES_DIR, "agent", "frameworks", framework, "scaffold");
+
+  try {
+    const files = await readdir(scaffoldDir);
+    for (const file of files) {
+      const srcPath = join(scaffoldDir, file);
+      const destPath = join(projectDir, file);
+
+      // Read, render variables, write
+      const content = await readFile(srcPath, "utf-8");
+      const rendered = renderTemplate(content, vars);
+      await writeFile(destPath, rendered);
+      result.filesCreated.push(file);
+    }
+  } catch {
+    result.filesSkipped.push(`framework scaffold (${framework} templates not found)`);
+  }
+}
+
+/**
+ * Copy type-specific scaffold files into the project directory.
+ * Used for project types that have their own scaffold/ directory
+ * (e.g., multi-agent with patterns.py and main.py).
+ */
+async function copyTypeScaffold(
+  projectDir: string,
+  type: string,
+  vars: Record<string, string>,
+  result: ScaffoldResult
+): Promise<void> {
+  const scaffoldDir = join(TEMPLATES_DIR, type, "scaffold");
+
+  try {
+    const files = await readdir(scaffoldDir);
+    for (const file of files) {
+      const srcPath = join(scaffoldDir, file);
+      const destPath = join(projectDir, file);
+
+      const content = await readFile(srcPath, "utf-8");
+      const rendered = renderTemplate(content, vars);
+      await writeFile(destPath, rendered);
+      result.filesCreated.push(file);
+    }
+  } catch {
+    result.filesSkipped.push(`type scaffold (${type} templates not found)`);
+  }
+}
+
+/**
+ * List seed doc files for a project type + optional framework.
+ * Returns type-level seed docs first, then framework-specific ones.
+ */
+export async function listSeedDocs(type: string, framework?: string): Promise<string[]> {
   const paths: string[] = [];
 
   // Type-specific seed docs
@@ -226,11 +300,26 @@ export async function listSeedDocs(type: string): Promise<string[]> {
     // No seed docs for this type
   }
 
+  // Framework-specific seed docs (for agent projects)
+  if (framework) {
+    const fwDir = join(TEMPLATES_DIR, type, "frameworks", framework, "seed-docs");
+    try {
+      const files = await readdir(fwDir);
+      for (const f of files) {
+        if (f.endsWith(".md") || f.endsWith(".txt")) {
+          paths.push(join(fwDir, f));
+        }
+      }
+    } catch {
+      // No framework-specific seed docs
+    }
+  }
+
   return paths;
 }
 
-async function countSeedDocs(type: string): Promise<number> {
-  return (await listSeedDocs(type)).length;
+async function countSeedDocs(type: string, framework?: string): Promise<number> {
+  return (await listSeedDocs(type, framework)).length;
 }
 
 /**
@@ -240,13 +329,14 @@ async function countSeedDocs(type: string): Promise<number> {
  */
 export async function ingestSeedDocs(
   projectName: string,
-  type: string
+  type: string,
+  framework?: string
 ): Promise<{ ingested: number; errors: string[] }> {
   const { getProjectDb } = await import("./db.js");
   const { ingestDocument } = await import("./ingest.js");
 
   const db = getProjectDb(projectName);
-  const docs = await listSeedDocs(type);
+  const docs = await listSeedDocs(type, framework);
   let ingested = 0;
   const errors: string[] = [];
 

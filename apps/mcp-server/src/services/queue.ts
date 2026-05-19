@@ -6,30 +6,21 @@
  * The TS side can also process simple text ingestion directly.
  */
 import { Queue } from "bullmq";
-import IORedis from "ioredis";
-import { config } from "../config.js";
+import { getRedis } from "./redis.js";
 
-let _connection: IORedis | null = null;
 let _ingestQueue: Queue | null = null;
 let _reindexQueue: Queue | null = null;
 
-function getConnection(): IORedis {
-  if (!_connection) {
-    _connection = new IORedis(config.redisUrl, { maxRetriesPerRequest: null });
-  }
-  return _connection;
-}
-
 export function getIngestQueue(): Queue {
   if (!_ingestQueue) {
-    _ingestQueue = new Queue("ingest", { connection: getConnection() });
+    _ingestQueue = new Queue("ingest", { connection: getRedis("bullmq") });
   }
   return _ingestQueue;
 }
 
 export function getReindexQueue(): Queue {
   if (!_reindexQueue) {
-    _reindexQueue = new Queue("reindex", { connection: getConnection() });
+    _reindexQueue = new Queue("reindex", { connection: getRedis("bullmq") });
   }
   return _reindexQueue;
 }

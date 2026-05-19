@@ -9,7 +9,13 @@ import { config } from "./config.js";
 import { registerRoutes } from "./routes/index.js";
 import { ensureRegistry } from "./services/projects.js";
 import { closeAllDbs } from "./services/db.js";
+import { closeAllRedis } from "./services/redis.js";
 import { backupAllProjects } from "./services/lifecycle.js";
+import { initTracing } from "./lib/tracing.js";
+import { registerTracingHooks } from "./middleware/tracing.js";
+
+// Initialize tracing before anything else
+initTracing();
 
 const app = Fastify({
   logger: {
@@ -33,6 +39,7 @@ const shutdown = async () => {
     app.log.warn("Auto-backup failed (non-fatal): " + (err instanceof Error ? err.message : String(err)));
   }
   await closeAllDbs();
+  await closeAllRedis();
   await app.close();
   process.exit(0);
 };
@@ -44,6 +51,9 @@ try {
   // Ensure workbench registry database + projects table
   await ensureRegistry();
   app.log.info("Workbench registry initialized");
+
+  // Register tracing hooks (must be before routes)
+  registerTracingHooks(app);
 
   await registerRoutes(app);
 

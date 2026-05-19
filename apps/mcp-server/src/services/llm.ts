@@ -4,42 +4,67 @@
  */
 import Anthropic from "@anthropic-ai/sdk";
 import { config } from "../config.js";
+import { withSpan, spanAttrs } from "../lib/tracing.js";
 
 const client = new Anthropic({ apiKey: config.anthropicApiKey });
 
 export async function generateAnswer(question: string, context: string): Promise<string> {
-  const response = await client.messages.create({
-    model: config.claudeModel,
-    max_tokens: 2048,
-    system:
-      "You are a knowledgebase assistant. Answer the user's question " +
-      "based ONLY on the provided context. If the context doesn't " +
-      "contain enough information to answer fully, say so clearly. " +
-      "Cite which parts of the context support your answer.",
-    messages: [
-      {
-        role: "user",
-        content: `Context:\n${context}\n\nQuestion: ${question}`,
-      },
-    ],
-  });
+  return withSpan(
+    "llm.generate_answer",
+    spanAttrs.llm(config.claudeModel, "generate_answer"),
+    async (span) => {
+      span.setAttribute("llm.question_length", question.length);
+      span.setAttribute("llm.context_length", context.length);
 
-  const block = response.content[0];
-  return block.type === "text" ? block.text : "";
+      const response = await client.messages.create({
+        model: config.claudeModel,
+        max_tokens: 2048,
+        system:
+          "You are a knowledgebase assistant. Answer the user's question " +
+          "based ONLY on the provided context. If the context doesn't " +
+          "contain enough information to answer fully, say so clearly. " +
+          "Cite which parts of the context support your answer.",
+        messages: [
+          {
+            role: "user",
+            content: `Context:\n${context}\n\nQuestion: ${question}`,
+          },
+        ],
+      });
+
+      span.setAttribute("llm.input_tokens", response.usage?.input_tokens ?? 0);
+      span.setAttribute("llm.output_tokens", response.usage?.output_tokens ?? 0);
+      span.setAttribute("llm.stop_reason", response.stop_reason ?? "unknown");
+
+      const block = response.content[0];
+      return block.type === "text" ? block.text : "";
+    }
+  );
 }
 
 export async function summarizeForIngestion(text: string): Promise<string> {
-  const response = await client.messages.create({
-    model: config.claudeModel,
-    max_tokens: 256,
-    messages: [
-      {
-        role: "user",
-        content: `Summarize this document in 2-3 sentences. Focus on key topics and entities.\n\n${text.slice(0, 3000)}`,
-      },
-    ],
-  });
+  return withSpan(
+    "llm.summarize",
+    spanAttrs.llm(config.claudeModel, "summarize"),
+    async (span) => {
+      span.setAttribute("llm.input_length", Math.min(text.length, 3000));
 
-  const block = response.content[0];
-  return block.type === "text" ? block.text : "";
+      const response = await client.messages.create({
+        model: config.claudeModel,
+        max_tokens: 256,
+        messages: [
+          {
+            role: "user",
+            content: `Summarize this document in 2-3 sentences. Focus on key topics and entities.\n\n${text.slice(0, 3000)}`,
+          },
+        ],
+      });
+
+      span.setAttribute("llm.input_tokens", response.usage?.input_tokens ?? 0);
+      span.setAttribute("llm.output_tokens", response.usage?.output_tokens ?? 0);
+
+      const block = response.content[0];
+      return block.type === "text" ? block.text : "";
+    }
+  );
 }

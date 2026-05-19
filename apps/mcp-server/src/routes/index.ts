@@ -19,6 +19,9 @@ import { registerRagRoutes } from "./rag.js";
 import { registerConversationRoutes } from "./conversations.js";
 import { registerMemoryRoutes } from "./memory.js";
 import { registerEvalRoutes } from "./eval.js";
+import { registerBusRoutes } from "./bus.js";
+import { registerDebugRoutes } from "./debug.js";
+import { registerAgentEvalRoutes } from "./agent-eval.js";
 import { registerProjectMiddleware } from "../middleware/project.js";
 
 /**
@@ -30,6 +33,9 @@ async function registerProjectScopedRoutes(app: FastifyInstance): Promise<void> 
   await registerConversationRoutes(app);
   await registerMemoryRoutes(app);
   await registerEvalRoutes(app);
+  await registerBusRoutes(app);
+  await registerDebugRoutes(app);
+  await registerAgentEvalRoutes(app);
 }
 
 export async function registerRoutes(app: FastifyInstance): Promise<void> {

@@ -225,6 +225,126 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
         required: ["name", "queries"],
       },
     },
+    // ── Message Bus ──────────────────────────────────
+    {
+      name: "bus_publish",
+      description:
+        "Publish a message to a channel for other agents to read. " +
+        "Messages persist in history and are delivered instantly to live subscribers.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          channel: { type: "string", description: "Channel name (e.g. 'planning', 'results')" },
+          sender: { type: "string", description: "Your agent name or role" },
+          content: { description: "Message content (any JSON)" },
+        },
+        required: ["channel", "sender", "content"],
+      },
+    },
+    {
+      name: "bus_read",
+      description:
+        "Read messages from a channel. Use since_id for polling — " +
+        "pass the last message ID you saw to get only new messages.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          channel: { type: "string", description: "Channel name" },
+          since_id: { type: "number", description: "Return messages after this ID (0 = all recent)", default: 0 },
+          limit: { type: "number", description: "Max messages to return", default: 20 },
+        },
+        required: ["channel"],
+      },
+    },
+    {
+      name: "bus_channels",
+      description: "List active message bus channels for the current project.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          prefix: { type: "string", description: "Filter channels by prefix (optional)" },
+        },
+      },
+    },
+    // ── Step-Through Debug ────────────────────────────────
+    {
+      name: "debug_enable",
+      description:
+        "Enable or disable step-through debug mode. When enabled, agent tool calls " +
+        "are held for your approval before executing.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          enabled: { type: "boolean", description: "true to enable, false to disable", default: true },
+        },
+      },
+    },
+    {
+      name: "debug_pending",
+      description: "List agent actions waiting for your approval.",
+      inputSchema: { type: "object", properties: {} },
+    },
+    {
+      name: "debug_approve",
+      description: "Approve a pending agent action (let it execute).",
+      inputSchema: {
+        type: "object",
+        properties: {
+          id: { type: "string", description: "Action ID from debug_pending" },
+        },
+        required: ["id"],
+      },
+    },
+    {
+      name: "debug_reject",
+      description: "Reject a pending agent action (block execution with a reason).",
+      inputSchema: {
+        type: "object",
+        properties: {
+          id: { type: "string", description: "Action ID from debug_pending" },
+          reason: { type: "string", description: "Why you're rejecting this action" },
+        },
+        required: ["id"],
+      },
+    },
+    // ── Agent Eval ───────────────────────────────────────
+    {
+      name: "agent_eval",
+      description:
+        "Run behavioral tests on an agent. Define scenarios with user messages " +
+        "and expected agent behavior (which tools to call, what to say, guardrails). " +
+        "Returns pass rate and per-scenario results.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          name: { type: "string", description: "Eval run name (e.g. 'support-bot-v1')" },
+          system_prompt: { type: "string", description: "The agent's system prompt to test" },
+          tools: {
+            type: "array", items: { type: "string" },
+            description: "Workbench tools the agent can use (default: rag_query, agent_remember, agent_recall)",
+          },
+          scenarios: {
+            type: "array",
+            description: "Test scenarios with user messages and expectations",
+            items: {
+              type: "object",
+              properties: {
+                name: { type: "string" },
+                turns: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    description: "Either {role:'user', content:'...'} or {expect: {...checks...}}",
+                  },
+                },
+              },
+              required: ["name", "turns"],
+            },
+          },
+        },
+        required: ["name", "system_prompt", "scenarios"],
+      },
+    },
   ],
 }));
 
@@ -279,6 +399,38 @@ server.setRequestHandler(CallToolRequestSchema, async (req) => {
       // ── Eval ───────────────────────────────────────────
       case "rag_eval":
         result = await api("/eval", "POST", { name: args.name, queries: args.queries, top_k: args.top_k });
+        break;
+      // ── Message Bus ────────────────────────────────────
+      case "bus_publish":
+        result = await api("/bus/publish", "POST", { channel: args.channel, sender: args.sender, content: args.content });
+        break;
+      case "bus_read":
+        result = await api("/bus/read", "POST", { channel: args.channel, since_id: args.since_id || 0, limit: args.limit || 20 });
+        break;
+      case "bus_channels":
+        result = await api(`/bus/channels${args.prefix ? `?prefix=${encodeURIComponent(args.prefix)}` : ""}`);
+        break;
+      // ── Step-Through Debug ─────────────────────────────
+      case "debug_enable":
+        result = await api("/debug/mode", "POST", { enabled: args.enabled ?? true });
+        break;
+      case "debug_pending":
+        result = await api("/debug/pending");
+        break;
+      case "debug_approve":
+        result = await api(`/debug/approve/${args.id}`, "POST");
+        break;
+      case "debug_reject":
+        result = await api(`/debug/reject/${args.id}`, "POST", { reason: args.reason || "Rejected" });
+        break;
+      // ── Agent Eval ─────────────────────────────────────
+      case "agent_eval":
+        result = await api("/agent-eval", "POST", {
+          name: args.name,
+          system_prompt: args.system_prompt,
+          tools: args.tools,
+          scenarios: args.scenarios,
+        });
         break;
       default:
         return { content: [{ type: "text", text: `Unknown tool: ${name}` }], isError: true };
