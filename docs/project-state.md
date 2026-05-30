@@ -597,14 +597,16 @@ The [alirezarezvani/claude-skills](https://github.com/alirezarezvani/claude-skil
     - `event-storming` is the mandatory pre-project workshop; referenced in `templates/_base/project.json` as `foundation_skills`
     - Apply retroactively: reference these skills from the roadmap of each project type's `project.json`
     - ✅ DONE: All 9 project type roadmaps updated with "Step 0: Foundation skills" pointing to DDD skills
-11. **Environment management skills (DEFERRED — requires workbench investigation)**
-    - **Problem:** No skills or workbench support for managing unpublished-work (dev/staging) environments vs. published-work (dev/staging/production) environments. Current workflow conflates workbench development with pre-production deployment.
-    - **Two tiers of concern:**
-      1. *Unpublished projects* (in active development): dev environment = workbench itself; staging = a second Docker Compose stack or a cloud dev environment. No skill covers this.
-      2. *Published projects* (live in production): need dev → staging → production promotion gates, environment-specific config, database migrations per environment, and rollback procedures. The microservices `deploy-new-environment` skill touches this but only for Terraform-managed cloud infra.
-    - **Workbench investigation needed:** Does `make export-stack` support multi-environment output? Can `PROJECT_DIR` and `WORKBENCH_PROJECT` be namespaced per environment? Should the workbench register separate project entries per environment (e.g., `myapp-dev`, `myapp-staging`, `myapp-prod`)?
-    - **Proposed skills (pending investigation):** `setup-dev-environment`, `promote-to-staging`, `promote-to-production`, `environment-config-management`, `rollback-environment`
-    - **Build after:** Production deployment skills (item 8 above) are a prerequisite — they establish what "production-ready" means before we design the promotion workflow.
+11. **Environment management skills** — ✅ DONE (May 2026)
+    - **Investigation findings:** The workbench doesn't need multi-environment features — it IS the dev environment. Environments are deploy-time concerns handled by the export layer. `make export-stack` produces a parameterized artifact; different `.env` files configure dev/staging/prod. No new workbench features needed.
+    - **Three tiers:** local dev (workbench itself, always current), staging (exported stack + `.env.staging`, second Compose stack or VM), production (Terraform or VM deploy with production secrets).
+    - **Multi-project note:** Multiple registered projects are supported (each gets its own DB); only one is active at a time via `WORKBENCH_PROJECT` + `PROJECT_DIR`. Working on the workbench source simultaneously with a scaffolded project requires two `claude-code` container instances.
+    - **Terminology settled:** projects are *scaffolded* (new, from template) or *imported* (existing codebase registered); both become *registered projects*; the currently selected one is the *active project*.
+    - **Skills built (3, all in `_base/skills/`):**
+      - `setup-staging-environment` — export stack, configure staging `.env`, run second Compose stack (local or remote), seed data, smoke test
+      - `promote-to-production` — pre-flight checklist, export, deploy (Compose or Terraform), migrate, cutover, rollback plan, post-deploy tagging
+      - `environment-config-management` — `.env.example` as key source of truth, drift audit script, secret rotation, onboarding patterns, `EMBEDDING_MODEL` constraint warning
+    - INDEX.md updated: 119 skills, new "Deployment / Environments" section
 12. **Design skills (10 — cross-cutting, in `templates/_base/skills/`)** — ✅ DONE
     - Theory (for designer discussion): `visual-design-principles`, `color-theory-and-systems`, `typography-system`, `layout-and-composition`, `ux-principles-and-patterns`, `ux-research-methods`
     - Implementation: `design-system-setup`, `responsive-layout-patterns`, `accessibility-implementation`, `animation-and-motion`

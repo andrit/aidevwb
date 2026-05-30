@@ -1,6 +1,6 @@
 # Skills Index
 
-All 116 skills across the workbench. Paths are relative to `templates/`.
+All 119 skills across the workbench. Paths are relative to `templates/`.
 
 **How to use:** When the user asks for something, scan the "Use when" column for matching phrases. Load the SKILL.md at the listed path and follow its steps.
 
@@ -225,6 +225,15 @@ Contract: `iot/capability.json` · provides: `sensor_data`, `ros2_nodes`, `mqtt_
 | ux-principles-and-patterns | `_base/skills/ux-principles-and-patterns` | "UX patterns", "interaction design", "affordances", "mental models", "heuristics" |
 | responsive-layout-patterns | `_base/skills/responsive-layout-patterns` | "responsive", "mobile first", "breakpoints", "fluid layout", "media queries" |
 | accessibility-implementation | `_base/skills/accessibility-implementation` | "accessibility", "a11y", "ARIA", "screen reader", "WCAG", "keyboard navigation" |
+
+---
+
+## Deployment / Environments
+| Skill | Path | Use when |
+|-------|------|----------|
+| setup-staging-environment | `_base/skills/setup-staging-environment` | "set up staging", "staging environment", "pre-production", "second environment", "test before production" |
+| promote-to-production | `_base/skills/promote-to-production` | "go to production", "promote to prod", "production deploy", "release", "ship it", "cutover" |
+| environment-config-management | `_base/skills/environment-config-management` | "manage config", "environment variables", "secrets management", "env drift", "new config key", ".env" |
 
 ---
 

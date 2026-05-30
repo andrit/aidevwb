@@ -75,7 +75,7 @@ variable "postgres_password" {
 
 variable "embedding_model" {
   type    = string
-  default = "voyage/voyage-3"
+  default = "mxbai-embed-large"
 }
 
 variable "embedding_dimensions" {
