@@ -1,0 +1,23 @@
+{
+  "name": "iot",
+  "description": "IoT / ROS2 — adds hardware interfaces, MQTT messaging, robot control, and edge deployment to any project",
+  "provides": ["sensor_data", "ros2_nodes", "mqtt_messaging", "edge_deployment"],
+  "consumes": ["message_bus"],
+  "mcp_tools": [
+    "rag_ingest", "rag_query", "rag_status", "project_test",
+    "agent_remember", "agent_recall",
+    "bus_publish", "bus_read",
+    "debug_enable", "debug_pending", "debug_approve", "debug_reject"
+  ],
+  "skills": [
+    "scaffold-ros2-workspace",
+    "create-ros2-node",
+    "ros2-simulation",
+    "connect-mqtt-broker",
+    "add-sensor-interface",
+    "write-robot-controller",
+    "add-network-device-interface",
+    "deploy-to-edge"
+  ],
+  "seed_docs": []
+}

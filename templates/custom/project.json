@@ -6,5 +6,9 @@
     "agent_remember", "agent_recall", "agent_forget", "agent_memories",
     "conversation_create", "conversation_list", "conversation_get", "conversation_append"
   ],
-  "roadmap": "1. Define what you're building\n2. Set up the project structure\n3. Build iteratively with Claude Code\n4. Test as you go with /test\n5. Ingest relevant docs into the knowledgebase as needed\n6. Ship when ready"
+  "roadmap": "0. Foundation: event-storming → ubiquitous-language (even for custom projects — name the domain concepts before building)\n1. Define what you're building\n2. Set up the project structure\n3. Build iteratively with Claude Code\n4. Test as you go with /test\n5. Ingest relevant docs into the knowledgebase as needed\n6. Ship when ready",
+  "skills": [
+    "setup-project-structure",
+    "add-mcp-tool-integration"
+  ]
 }

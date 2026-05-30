@@ -1,16 +1,19 @@
 /**
- * Embedding client via OpenRouter.
+ * Embedding client — provider-agnostic OpenAI-compatible endpoint.
  *
- * Uses the OpenAI SDK pointed at OpenRouter's endpoint.
- * Swap models by changing EMBEDDING_MODEL in .env — no code changes.
+ * Defaults to local Ollama (http://ollama:11434/v1, model: mxbai-embed-large).
+ * Switch provider by setting EMBEDDING_BASE_URL + EMBEDDING_API_KEY + EMBEDDING_MODEL in .env.
+ *
+ * Voyage AI:  EMBEDDING_BASE_URL=https://api.voyageai.com/v1  EMBEDDING_API_KEY=va-...  EMBEDDING_MODEL=voyage-3
+ * OpenRouter: EMBEDDING_BASE_URL=https://openrouter.ai/api/v1  EMBEDDING_API_KEY=sk-or-...  EMBEDDING_MODEL=openai/text-embedding-3-small
  */
 import OpenAI from "openai";
 import { config } from "../config.js";
 import { withSpan, spanAttrs } from "../lib/tracing.js";
 
 const client = new OpenAI({
-  baseURL: "https://openrouter.ai/api/v1",
-  apiKey: config.openrouterApiKey,
+  baseURL: config.embeddingBaseUrl,
+  apiKey: config.embeddingApiKey,
 });
 
 export async function embedTexts(texts: string[]): Promise<number[][]> {

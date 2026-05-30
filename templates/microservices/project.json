@@ -1,0 +1,20 @@
+{
+  "type": "microservices",
+  "description": "Containerized microservices — distributed system with IaC, observability, and production readiness",
+  "mcp_tools": [
+    "rag_ingest", "rag_query", "rag_status", "rag_eval", "project_test",
+    "agent_remember", "agent_recall"
+  ],
+  "roadmap": "0. Foundation: event-storming → define-bounded-contexts → design-aggregates → model-domain-events → ubiquitous-language (DDD is load-bearing here — bounded contexts ARE your service boundaries)\n1. Define service boundaries (bounded contexts from event storm)\n2. Define API contracts (OpenAPI/protobuf)\n3. Scaffold service structure (one dir per service)\n4. Database per service\n5. Inter-service communication (sync REST/gRPC + async events)\n6. Observability (logging, metrics, tracing)\n7. Infrastructure as Code (Terraform environments)\n8. CI/CD pipeline per service\n9. Container orchestration (Swarm or Kubernetes)\n10. Production readiness review (Susan Fowler checklist)\n11. Deploy to staging → production",
+  "skills": [
+    "add-new-service",
+    "setup-inter-service-comms",
+    "add-service-observability",
+    "production-readiness-review",
+    "add-terraform-module",
+    "deploy-new-environment",
+    "implement-outbox-pattern",
+    "cqrs-read-model",
+    "single-writer-principle"
+  ]
+}

@@ -2,7 +2,7 @@
 
 ## What This Is
 
-A portable Docker-based AI development environment with multi-project support, RAG/MCP infrastructure, agent framework scaffolding, observability, and production export. 22 MCP tools, 143 tests, 203 files.
+A portable Docker-based AI development environment with multi-project support, RAG/MCP infrastructure, agent framework scaffolding, observability, and production export. 22 MCP tools, 166 tests, 251 files.
 
 The workbench helps build any kind of application — web apps, CLIs, RAG apps, autonomous agents, multi-agent systems — with AI-native development tooling.
 
@@ -25,15 +25,17 @@ The workbench helps build any kind of application — web apps, CLIs, RAG apps, 
 If you find yourself doing the same kind of task more than twice, create a skill file. Skills capture reusable patterns, templates, and checklists so the workbench (and you) can do them consistently.
 
 Skill file locations:
+- `templates/<type>/skills/<skill-name>/SKILL.md` — project-type-specific skills (shipped with the workbench)
 - `/mnt/skills/user/` — user-created skills (read by Claude Code automatically)
-- `docs/skills/` — workbench-specific skills (checked into the repo)
 
-A skill file should include:
-- **When to use it** — the trigger conditions
-- **Step-by-step process** — the exact actions to take
-- **Templates/boilerplate** — code that gets reused each time
-- **Checklist** — what to verify when done
-- **Files involved** — which files to create or modify
+A skill file MUST include these sections in this order:
+1. **When to use** — the trigger conditions (what the user asks that activates this skill)
+2. **Prerequisites** — what must exist before starting
+3. **Steps** — numbered, specific actions ("create file X at path Y with content Z", not "set up the thing")
+4. **Templates** — actual code boilerplate that gets reused each time
+5. **Checklist** — what to verify when done
+6. **Files involved** — which files to create or modify
+7. **Common mistakes** — things to watch out for
 
 Examples of things that should become skills:
 - Adding a new MCP tool (schema → service → route → bridge → test → slash command)
@@ -41,8 +43,23 @@ Examples of things that should become skills:
 - Adding a new database table (migration → schema → service → route → tests)
 - Instrumenting a service with OTel tracing
 - Creating a new Grafana dashboard
+- The workflows necessary to build each of the project types (see `docs/project-state.md` — PENDING: Skills Build Plan)
 
-### Before Making Changes
+**There is a pending plan to build ~40 skills across all 9 project types plus React skills.** See `docs/project-state.md` section "PENDING: Skills Build Plan" for the full inventory, format, build order, and instructions. Start with React skills (4), then fullstack (5), then agent (5) + multi-agent (4).
+
+**Reference catalog:** The [alirezarezvani/claude-skills](https://github.com/alirezarezvani/claude-skills) repo (313+ skills, MIT license) has been reviewed. Relevant skills: agent-designer, rag-architect, database-designer, ci-cd-pipeline-builder, mcp-server-builder, observability-designer, senior-architect. Use their format conventions (SKILL.md with frontmatter, scripts/, references/) as inspiration.
+
+### Before Instructing the User to Run Commands
+
+Always check and mention prerequisites before telling the user to run a command:
+- **`make init` / `make up` / `make build`** — does `package-lock.json` exist in `apps/mcp-server/`? If not, tell the user to run `cd apps/mcp-server && npm install && cd ../..` first.
+- **Any Docker command** — remind that Docker Desktop must be running if there's reason to think it might not be.
+- **Any `npm ci` or `npm run build`** — requires `package-lock.json`. If it was deleted or never generated (e.g., fresh clone from a zip without it), `npm install` must run first.
+- **Python scripts** — check if `pip install -r requirements.txt` is needed.
+- **Terraform commands** — check if `terraform init` has been run in that environment.
+- **Make targets that call curl** — check if services are running (`make up` first).
+
+Never assume the user's environment is already set up. State prerequisites explicitly.
 
 1. Read the relevant docs first — they contain decisions, context, and constraints
 2. Check `docs/project-state.md` for the current inventory and what's been built
@@ -123,6 +140,7 @@ templates/
 │   └── patterns/       — orchestration patterns library (patterns.py)
 ├── multi-agent/        — multi-agent system (scaffold with patterns.py + main.py)
 ├── data-pipeline/      — ETL/data processing
+├── iot/                — IoT/ROS2 (robot nodes, MQTT sensors, edge deployment)
 └── custom/             — all tools, no guidance
 ```
 
@@ -139,7 +157,7 @@ Template configs are deep-merged: `_base/project.json` + `<type>/project.json`. 
 | `src/services/projects.ts` | Project CRUD + DB lifecycle + migration list | Adding a new migration |
 | `src/lib/tracing.ts` | OTel init + withSpan + spanAttrs | Adding a new trace category |
 | `configs/mcp/bridge/index.js` | All 22 MCP tool definitions + handlers | Adding a new MCP tool |
-| `docker-compose.yml` | All 10 services | Adding a service or changing config |
+| `docker-compose.yml` | All 11 services | Adding a service or changing config |
 | `Makefile` | All CLI targets | Adding a new workflow command |
 
 ## Environment Variables
@@ -147,17 +165,18 @@ Template configs are deep-merged: `_base/project.json` + `<type>/project.json`. 
 Required in `.env`:
 ```
 ANTHROPIC_API_KEY        — Claude LLM + Claude Code auth
-OPENROUTER_API_KEY       — embedding model access
 POSTGRES_PASSWORD        — PostgreSQL password
-JWT_SECRET               — Supabase auth (32+ chars)
 ```
 
 Optional:
 ```
 WORKBENCH_PROJECT        — active project name (MCP bridge reads this)
 PROJECT_DIR              — project directory mounted into claude-code
-EMBEDDING_MODEL          — default: voyage/voyage-3
+EMBEDDING_BASE_URL       — default: http://ollama:11434/v1 (local Ollama, no account needed)
+EMBEDDING_API_KEY        — default: ollama
+EMBEDDING_MODEL          — default: mxbai-embed-large
 EMBEDDING_DIMENSIONS     — default: 1024
+OPENROUTER_API_KEY       — only needed if switching to OpenRouter as embedding provider
 CLAUDE_MODEL             — default: claude-sonnet-4-20250514
 ```
 
@@ -230,6 +249,7 @@ When working on a specific area, read the relevant doc first:
 | Request patterns | docs/13-request-patterns.md |
 | Multi-project | docs/10-multi-project-architecture.md |
 | Project templates | docs/11-project-types-and-affordances.md |
+| Project types (DDD) | docs/16-project-types-explainer.md |
 | Export/deploy | docs/12-exporting-to-production.md |
 | Observability | docs/01-grafana.md, docs/02-tempo.md, docs/03-opentelemetry-collector.md |
 | Agent frameworks | docs/phase-3a1-report.md |
@@ -240,7 +260,9 @@ When working on a specific area, read the relevant doc first:
 | Step-through debug | docs/phase-3a5-report.md |
 | Overall project state | docs/project-state.md |
 | Gaps and priorities | docs/design-note-four-skills.md |
+| Mode A vs Mode B | docs/developing-vs-utilizing-workbench.md |
 | Smoke testing | docs/SMOKE-TEST.md |
+| **Skills build plan** | **docs/project-state.md → "PENDING: Skills Build Plan"** |
 
 ## Testing
 

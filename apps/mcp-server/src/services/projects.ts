@@ -12,7 +12,7 @@ import { join } from "path";
 import postgres from "postgres";
 import { config } from "../config.js";
 import { getRegistryDb, getProjectDb, closeProjectDb, type Db } from "./db.js";
-import type { CreateProjectInput, Project } from "../schemas/index.js";
+import type { CreateProjectInput, Project, CapabilityProvider } from "../schemas/index.js";
 
 const MIGRATION_DIR = "/app/migrations";
 const MIGRATION_FILES = [
@@ -96,6 +96,34 @@ export async function updateProjectConfig(
   `;
   if (rows.length === 0) throw new Error(`Project '${name}' not found`);
   return rows[0] as unknown as Project;
+}
+
+export async function listCapabilities(capability?: string): Promise<CapabilityProvider[]> {
+  const db = getRegistryDb();
+  // provides[] is a plain string-token array: ["hybrid_search", "document_ingestion", ...]
+  // elem #>> '{}' extracts the unquoted string value from a jsonb text element
+  const rows = capability
+    ? await db`
+        SELECT
+          p.name        AS project,
+          p.type,
+          elem #>> '{}' AS capability
+        FROM projects p,
+          jsonb_array_elements(COALESCE(p.config->'provides', '[]'::jsonb)) elem
+        WHERE elem #>> '{}' = ${capability}
+        ORDER BY p.name
+      `
+    : await db`
+        SELECT
+          p.name        AS project,
+          p.type,
+          elem #>> '{}' AS capability
+        FROM projects p,
+          jsonb_array_elements(COALESCE(p.config->'provides', '[]'::jsonb)) elem
+        WHERE jsonb_array_length(COALESCE(p.config->'provides', '[]'::jsonb)) > 0
+        ORDER BY elem #>> '{}', p.name
+      `;
+  return rows as unknown as CapabilityProvider[];
 }
 
 // ── Database Lifecycle ───────────────────────────────────

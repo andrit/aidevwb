@@ -6,16 +6,28 @@
  * GET    /projects/:name        — get project details
  * DELETE /projects/:name        — drop project + database
  * PATCH  /projects/:name/config — update project config
+ * GET    /capabilities          — list all capability providers across all projects
+ * GET    /capabilities/:name    — list projects providing a specific capability
  */
 import { FastifyInstance } from "fastify";
-import { CreateProjectSchema } from "../schemas/index.js";
+import { CreateProjectSchema, type CapabilityProvider } from "../schemas/index.js";
 import {
   listProjects,
   getProject,
   createProject,
   deleteProject,
   updateProjectConfig,
+  listCapabilities,
 } from "../services/projects.js";
+
+export function groupByCapability(
+  providers: CapabilityProvider[]
+): Record<string, CapabilityProvider[]> {
+  return providers.reduce<Record<string, CapabilityProvider[]>>((acc, p) => {
+    (acc[p.capability] ??= []).push(p);
+    return acc;
+  }, {});
+}
 
 export async function registerProjectRoutes(app: FastifyInstance): Promise<void> {
 
@@ -75,5 +87,19 @@ export async function registerProjectRoutes(app: FastifyInstance): Promise<void>
       }
       throw err;
     }
+  });
+
+  app.get("/capabilities", async () => {
+    const providers = await listCapabilities();
+    return { capabilities: groupByCapability(providers) };
+  });
+
+  app.get("/capabilities/:capability", async (request, reply) => {
+    const { capability } = request.params as { capability: string };
+    const providers = await listCapabilities(capability);
+    if (providers.length === 0) {
+      return reply.status(404).send({ error: `No projects provide capability '${capability}'` });
+    }
+    return { capability, providers };
   });
 }

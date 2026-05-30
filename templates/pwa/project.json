@@ -2,5 +2,22 @@
   "type": "pwa",
   "description": "Progressive Web App — installable, offline-capable",
   "mcp_tools": ["rag_ingest", "rag_query", "rag_status", "project_test"],
-  "roadmap": "1. Scaffold with service worker + manifest\n2. App shell architecture\n3. Caching strategy (network-first, cache-first, stale-while-revalidate)\n4. Offline fallback\n5. Push notifications (optional)\n6. Lighthouse audit + optimization\n7. Deploy"
+  "roadmap": "0. Foundation: event-storming → ubiquitous-language (define user actions, offline states, and notification events as domain vocabulary)\n1. Scaffold with service worker + manifest\n2. App shell architecture\n3. Caching strategy (network-first, cache-first, stale-while-revalidate)\n4. Offline fallback\n5. Push notifications (optional)\n6. Lighthouse audit + optimization\n7. Deploy",
+  "skills": [
+    "add-cache-strategy",
+    "setup-push-notifications",
+    "add-offline-fallback",
+    "lighthouse-audit-fix",
+    "production-pwa-deployment"
+  ],
+  "design_skills": [
+    "_base/skills/visual-design-principles",
+    "_base/skills/color-theory-and-systems",
+    "_base/skills/typography-system",
+    "_base/skills/layout-and-composition",
+    "_base/skills/ux-principles-and-patterns",
+    "_base/skills/responsive-layout-patterns",
+    "_base/skills/accessibility-implementation",
+    "_base/skills/animation-and-motion"
+  ]
 }

@@ -1,0 +1,43 @@
+{
+  "type": "iot",
+  "description": "IoT and robotics — ROS2 nodes, MQTT sensor networks, robot controllers, network device interfaces, and edge deployment. Code runs in Docker during development; ultimately executes on physical hardware.",
+  "mcp_tools": [
+    "rag_ingest", "rag_query", "rag_status", "rag_eval",
+    "project_test",
+    "agent_remember", "agent_recall",
+    "bus_publish", "bus_read",
+    "debug_enable", "debug_pending", "debug_approve", "debug_reject"
+  ],
+  "foundation_skills": [
+    "event-storming",
+    "define-bounded-contexts",
+    "design-aggregates",
+    "ubiquitous-language"
+  ],
+  "skills": [
+    "scaffold-ros2-workspace",
+    "create-ros2-node",
+    "ros2-simulation",
+    "connect-mqtt-broker",
+    "add-sensor-interface",
+    "write-robot-controller",
+    "add-network-device-interface",
+    "deploy-to-edge"
+  ],
+  "frameworks": ["ros2-python", "mqtt-only"],
+  "seed_docs": [
+    "ros2-patterns.md",
+    "iot-protocols.md",
+    "network-device-patterns.md",
+    "edge-deployment.md"
+  ],
+  "roadmap": "0. Foundation skills: event-storming → define-bounded-contexts → ubiquitous-language\n1. Choose framework: ros2-python (ROS2 Jazzy) or mqtt-only (pure MQTT/IoT)\n2. Scaffold workspace and verify build (scaffold-ros2-workspace)\n3. Create first node or device interface (create-ros2-node)\n4. Add simulation layer for hardware-free testing (ros2-simulation)\n5. Connect MQTT broker if IoT integration needed (connect-mqtt-broker)\n6. Add sensor interfaces with mock/real abstraction (add-sensor-interface)\n7. Implement controller with mandatory safety checks (write-robot-controller)\n8. Add network device monitoring if applicable (add-network-device-interface)\n9. Deploy to edge hardware (deploy-to-edge)",
+  "notes": {
+    "hardware_gap": "The workbench scaffolds and simulates, but cannot actuate a physical robot or read a real sensor. Every skill separates what runs in Docker (simulation, mocks) from what requires physical hardware.",
+    "real_time": "Sub-10ms control loops require PREEMPT_RT kernel and dedicated hardware. Docker on a dev laptop cannot guarantee this. Flag RT requirements early; design for simulation first.",
+    "safety": "Robot controllers must implement velocity clamping, e-stop, and watchdog timers as mandatory — not optional. The write-robot-controller skill treats these as non-negotiable.",
+    "ros2_version": "ROS2 Jazzy Jalisco (LTS, supported until May 2029)",
+    "simulation": "Mock-only — abstract interface pattern instead of full Gazebo. Keeps the workbench dependency-free; no extra containers needed.",
+    "language": "Python primary. C++ scaffold available but skills are Python-first."
+  }
+}

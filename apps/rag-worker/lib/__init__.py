@@ -6,15 +6,15 @@ import os
 ANTHROPIC_API_KEY = os.environ["ANTHROPIC_API_KEY"]
 CLAUDE_MODEL = os.environ.get("CLAUDE_MODEL", "claude-sonnet-4-20250514")
 
-OPENROUTER_API_KEY = os.environ["OPENROUTER_API_KEY"]
-EMBEDDING_MODEL = os.environ.get("EMBEDDING_MODEL", "voyage/voyage-3")
+OPENROUTER_API_KEY = os.environ.get("OPENROUTER_API_KEY", "")
+EMBEDDING_BASE_URL = os.environ.get("EMBEDDING_BASE_URL", "http://ollama:11434/v1")
+EMBEDDING_API_KEY = os.environ.get("EMBEDDING_API_KEY", "ollama")
+EMBEDDING_MODEL = os.environ.get("EMBEDDING_MODEL", "mxbai-embed-large")
 EMBEDDING_DIMENSIONS = int(os.environ.get("EMBEDDING_DIMENSIONS", "1024"))
 
-SUPABASE_URL = os.environ.get("SUPABASE_URL", "http://supabase-kong:8000")
-SUPABASE_SERVICE_KEY = os.environ["SUPABASE_SERVICE_KEY"]
-SUPABASE_DB_URL = os.environ.get(
+DB_URL = os.environ.get(
     "SUPABASE_DB_URL",
-    "postgresql://postgres:postgres@supabase-db:5432/postgres"
+    "postgresql://postgres:postgres@postgres:5432/postgres"
 )
 
 REDIS_URL = os.environ.get("REDIS_URL", "redis://redis:6379")

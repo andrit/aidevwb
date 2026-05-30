@@ -1,0 +1,17 @@
+{
+  "name": "pwa",
+  "description": "Progressive Web App layer — offline support, push notifications, and installability on top of any web frontend",
+  "provides": ["offline_support", "push_notifications", "installable_web"],
+  "consumes": ["web_interface"],
+  "mcp_tools": [
+    "rag_ingest", "rag_query", "project_test"
+  ],
+  "skills": [
+    "add-cache-strategy",
+    "setup-push-notifications",
+    "add-offline-fallback",
+    "lighthouse-audit-fix",
+    "production-pwa-deployment"
+  ],
+  "seed_docs": []
+}

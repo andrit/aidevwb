@@ -1,0 +1,20 @@
+{
+  "name": "rag",
+  "description": "Hybrid vector + keyword search over ingested documents — adds knowledgebase, chunking, embedding, and retrieval to any project",
+  "provides": ["hybrid_search", "document_ingestion", "search_eval", "knowledgebase"],
+  "consumes": ["embedding_service"],
+  "mcp_tools": [
+    "rag_ingest", "rag_query", "rag_status", "rag_reindex", "rag_eval"
+  ],
+  "skills": [
+    "ingest-and-validate",
+    "tune-search-quality",
+    "add-data-source",
+    "query-rewriting",
+    "source-citation",
+    "rag-with-conversation-context",
+    "export-rag-stack",
+    "production-rag-operations"
+  ],
+  "seed_docs": []
+}

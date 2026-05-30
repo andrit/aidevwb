@@ -104,7 +104,7 @@ async function handleScaffold(
   config: Record<string, unknown>,
   result: ScaffoldResult
 ): Promise<void> {
-  const framework = resolveFramework(opts.framework);
+  const framework = resolveFramework(opts.framework, opts.type);
   const vars = {
     PROJECT_NAME: opts.name,
     PROJECT_DESCRIPTION: (config.description as string) || `${opts.type} project`,
@@ -128,12 +128,18 @@ async function handleScaffold(
 
   // For agent projects: copy framework-specific scaffold files
   if (opts.type === "agent") {
-    await copyFrameworkScaffold(opts.directory, framework, vars, result);
+    await copyFrameworkScaffold(opts.directory, framework, "agent", vars, result);
   }
 
   // For multi-agent projects: copy patterns library + scaffold files
   if (opts.type === "multi-agent") {
     await copyTypeScaffold(opts.directory, "multi-agent", vars, result);
+  }
+
+  // For microservices projects: copy type scaffold + orchestrator-specific files
+  if (opts.type === "microservices") {
+    await copyTypeScaffold(opts.directory, "microservices", vars, result);
+    await copyFrameworkScaffold(opts.directory, framework, "microservices", vars, result);
   }
 }
 
@@ -220,19 +226,17 @@ async function loadProjectConfig(type: string): Promise<Record<string, unknown>>
 }
 
 /**
- * List seed doc files for a project type.
- */
-/**
  * Copy framework-specific scaffold files into the project directory.
  * Renders {{VARIABLE}} placeholders in file contents.
  */
 async function copyFrameworkScaffold(
   projectDir: string,
   framework: string,
+  projectType: string,
   vars: Record<string, string>,
   result: ScaffoldResult
 ): Promise<void> {
-  const scaffoldDir = join(TEMPLATES_DIR, "agent", "frameworks", framework, "scaffold");
+  const scaffoldDir = join(TEMPLATES_DIR, projectType, "frameworks", framework, "scaffold");
 
   try {
     const files = await readdir(scaffoldDir);
@@ -300,7 +304,7 @@ export async function listSeedDocs(type: string, framework?: string): Promise<st
     // No seed docs for this type
   }
 
-  // Framework-specific seed docs (for agent projects)
+  // Framework-specific seed docs (agent frameworks, microservices orchestrators)
   if (framework) {
     const fwDir = join(TEMPLATES_DIR, type, "frameworks", framework, "seed-docs");
     try {
@@ -312,6 +316,21 @@ export async function listSeedDocs(type: string, framework?: string): Promise<st
       }
     } catch {
       // No framework-specific seed docs
+    }
+
+    // For K8s variants (k8s-eks, k8s-gke, k8s-aks): also include base k8s docs
+    if (framework.startsWith("k8s-")) {
+      const baseK8sDir = join(TEMPLATES_DIR, type, "frameworks", "k8s", "seed-docs");
+      try {
+        const files = await readdir(baseK8sDir);
+        for (const f of files) {
+          if (f.endsWith(".md") || f.endsWith(".txt")) {
+            paths.push(join(baseK8sDir, f));
+          }
+        }
+      } catch {
+        // No base k8s seed docs
+      }
     }
   }
 

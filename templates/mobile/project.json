@@ -1,0 +1,23 @@
+{
+  "type": "mobile",
+  "description": "Mobile application — React Native (cross-platform), Swift/iOS, or Kotlin/Android with workbench-powered backend",
+  "mcp_tools": [
+    "rag_ingest", "rag_query", "rag_status", "project_test",
+    "agent_remember", "agent_recall",
+    "conversation_create", "conversation_list", "conversation_get", "conversation_append"
+  ],
+  "roadmap": "0. Foundation: event-storming → define-bounded-contexts → model-domain-events → ubiquitous-language (define screen flows and domain model before coding)\n1. Choose platform: React Native/Expo (cross-platform), Swift/SwiftUI (iOS), or Kotlin/Compose (Android)\n2. Scaffold project + configure workbench backend URL\n3. Design navigation structure (tabs, stacks, drawers)\n4. Implement API client layer (typed calls to workbench mcp-server)\n5. Build screens + state management\n6. Add offline support (local cache, optimistic UI)\n7. Authentication (OAuth, biometrics, secure storage)\n8. Push notifications\n9. Tests (unit + component + E2E with Detox or Maestro)\n10. Ship (EAS Build / Xcode Archive / Gradle release)",
+  "notes": "The workbench handles the backend. Mobile client code is edited by Claude Code but built and run on the host (Xcode, Android Studio, or Expo Go). API base URL is the host machine's LAN IP on port 3200 (mapped from mcp-server:3000). Use 10.0.2.2:3200 on Android emulator, localhost:3200 on iOS simulator.",
+  "skills": [
+    "skills/react-native"
+  ],
+  "platform_skills": [
+    "_base/skills/mobile-swift-ios",
+    "_base/skills/mobile-kotlin-android",
+    "_base/skills/vr-react-vr"
+  ],
+  "animation_skills": [
+    "_base/skills/anim-react-three-fiber",
+    "_base/skills/anim-framer-motion"
+  ]
+}

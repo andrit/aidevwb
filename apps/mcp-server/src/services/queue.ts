@@ -4,23 +4,27 @@
  * The MCP server enqueues ingestion jobs; the Python rag-worker
  * consumes them via its own BullMQ-compatible worker.
  * The TS side can also process simple text ingestion directly.
+ *
+ * Uses getRedisConfig() (plain config object) instead of getRedis()
+ * (ioredis instance) because BullMQ bundles its own ioredis version.
+ * Passing an external ioredis instance causes type conflicts.
  */
 import { Queue } from "bullmq";
-import { getRedis } from "./redis.js";
+import { getRedisConfig } from "./redis.js";
 
 let _ingestQueue: Queue | null = null;
 let _reindexQueue: Queue | null = null;
 
 export function getIngestQueue(): Queue {
   if (!_ingestQueue) {
-    _ingestQueue = new Queue("ingest", { connection: getRedis("bullmq") });
+    _ingestQueue = new Queue("ingest", { connection: getRedisConfig() });
   }
   return _ingestQueue;
 }
 
 export function getReindexQueue(): Queue {
   if (!_reindexQueue) {
-    _reindexQueue = new Queue("reindex", { connection: getRedis("bullmq") });
+    _reindexQueue = new Queue("reindex", { connection: getRedisConfig() });
   }
   return _reindexQueue;
 }

@@ -42,9 +42,11 @@ claude-cmd: ## Run a one-shot Claude Code command (usage: make claude-cmd CMD="y
 # ── Project Management ───────────────────────────────────
 
 project: ## Register an existing project (usage: make project NAME=nexus DIR=~/code/nexus TYPE=fullstack)
-	@curl -sf -X POST http://localhost:$${API_PORT:-3100}/scaffold \
+	@FRAMEWORK_JSON=""; \
+	if [ -n "$(FRAMEWORK)" ]; then FRAMEWORK_JSON=", \"framework\": \"$(FRAMEWORK)\""; fi; \
+	curl -sf -X POST http://localhost:$${API_PORT:-3100}/scaffold \
 		-H "Content-Type: application/json" \
-		-d "{\"name\": \"$(NAME)\", \"directory\": \"$(DIR)\", \"type\": \"$(or $(TYPE),custom)\"$(if $(FRAMEWORK),, \"framework\": \"$(FRAMEWORK)\")}" \
+		-d "{\"name\": \"$(NAME)\", \"directory\": \"$(DIR)\", \"type\": \"$(or $(TYPE),custom)\"$$FRAMEWORK_JSON}" \
 		| python3 -m json.tool
 	@echo ""
 	@echo "  To start working:"
@@ -61,6 +63,41 @@ scaffold: ## Create a new project from template (usage: make scaffold NAME=myapp
 list-projects: ## List all registered projects
 	@curl -sf http://localhost:$${API_PORT:-3100}/projects | python3 -m json.tool
 
+add-capability: ## Add a capability to an existing project (usage: make add-capability NAME=myapp CAPABILITY=rag)
+	@test -n "$(NAME)" || (echo "NAME required. Usage: make add-capability NAME=myapp CAPABILITY=rag"; exit 1)
+	@test -n "$(CAPABILITY)" || (echo "CAPABILITY required. Usage: make add-capability NAME=myapp CAPABILITY=rag"; exit 1)
+	@bash infra/scripts/add-capability.sh $(NAME) $(CAPABILITY)
+
+show-capability: ## Show what a capability provides/consumes/adds (usage: make show-capability CAPABILITY=rag)
+	@test -n "$(CAPABILITY)" || (echo "CAPABILITY required. Usage: make show-capability CAPABILITY=rag"; exit 1)
+	@test -f templates/$(CAPABILITY)/capability.json || (echo "No capability.json for '$(CAPABILITY)'"; exit 1)
+	@python3 -c "
+import json, sys
+with open('templates/$(CAPABILITY)/capability.json') as f:
+    c = json.load(f)
+print(f\"Capability: {c['name']}\")
+print(f\"  {c.get('description','')}\")
+print(f\"  Provides: {', '.join(c.get('provides',[])) or '(none)'}\")
+print(f\"  Consumes: {', '.join(c.get('consumes',[])) or '(none)'}\")
+print(f\"  MCP tools: {', '.join(c.get('mcp_tools',[]))}\")
+print(f\"  Skills: {', '.join(c.get('skills',[]))}\")
+"
+
+list-capabilities: ## List all available capabilities with their contracts (usage: make list-capabilities)
+	@python3 -c "
+import json, os, glob
+caps = sorted(glob.glob('templates/*/capability.json'))
+for path in caps:
+    ctype = path.split('/')[1]
+    with open(path) as f:
+        c = json.load(f)
+    prov = ', '.join(c.get('provides', [])) or '(none)'
+    cons = ', '.join(c.get('consumes', [])) or '(none)'
+    print(f\"  {ctype:<16} provides: {prov}\")
+    if c.get('consumes'):
+        print(f\"  {'':16} consumes: {cons}\")
+"
+
 drop-project: ## Drop a project and its database (usage: make drop-project NAME=nexus)
 	@echo "⚠️  This will delete the '$(NAME)' database and all its RAG data."
 	@read -p "  Continue? [y/N] " confirm && [ "$$confirm" = "y" ] && \
@@ -69,13 +106,13 @@ drop-project: ## Drop a project and its database (usage: make drop-project NAME=
 backup-project: ## Backup a project's database (usage: make backup-project NAME=nexus)
 	@echo "▸ Backing up project '$(NAME)'..."
 	@mkdir -p backups
-	@docker exec supabase-db pg_dump -U postgres --no-owner --no-privileges --clean --if-exists $(NAME) \
+	@docker exec postgres pg_dump -U postgres --no-owner --no-privileges --clean --if-exists $(NAME) \
 		| gzip > backups/$(NAME)-$$(date +%Y%m%d-%H%M%S).sql.gz
 	@echo "✓ Backup: backups/$(NAME)-$$(date +%Y%m%d-%H%M%S).sql.gz"
 
 restore-project: ## Restore a project's database (usage: make restore-project NAME=nexus BACKUP=backups/file.sql.gz)
 	@echo "▸ Restoring project '$(NAME)' from $(BACKUP)..."
-	@gunzip -c $(BACKUP) | docker exec -i supabase-db psql -U postgres -d $(NAME) --quiet 2>&1 | head -5
+	@gunzip -c $(BACKUP) | docker exec -i postgres psql -U postgres -d $(NAME) --quiet 2>&1 | head -5
 	@echo "✓ Restored."
 
 # ── Optional Profiles ────────────────────────────────────
@@ -109,7 +146,7 @@ logs-worker: ## Tail RAG worker logs
 # ── Database ─────────────────────────────────────────────
 
 db-shell: ## Open psql shell in Supabase database
-	docker exec -it supabase-db psql -U postgres
+	docker exec -it postgres psql -U postgres
 
 backup: ## Backup database to backups/ (portable, travels with repo)
 	@bash infra/scripts/backup.sh
@@ -143,15 +180,15 @@ smoke-test: ## Run automated smoke test checks (see docs/SMOKE-TEST.md for full 
 	@echo ""
 	@echo "── Health Checks ──"
 	@printf "  MCP Server:  " && (curl -sf http://localhost:3100/health > /dev/null && echo "✅" || echo "❌")
-	@printf "  PostgreSQL:  " && (docker exec supabase-db pg_isready -U postgres > /dev/null 2>&1 && echo "✅" || echo "❌")
+	@printf "  PostgreSQL:  " && (docker exec postgres pg_isready -U postgres > /dev/null 2>&1 && echo "✅" || echo "❌")
 	@printf "  Redis:       " && (docker exec redis redis-cli ping > /dev/null 2>&1 && echo "✅" || echo "❌")
 	@printf "  Grafana:     " && (curl -sf http://localhost:3200/api/health > /dev/null && echo "✅" || echo "❌")
 	@printf "  OTel:        " && (curl -sf http://localhost:4318/ > /dev/null 2>&1 && echo "✅" || echo "⚠️  (may still be ok)")
 	@echo ""
 	@echo "── Database ──"
-	@printf "  Extensions:  " && (docker exec supabase-db psql -U postgres -t -c "SELECT count(*) FROM pg_extension WHERE extname IN ('vector','pg_trgm');" 2>/dev/null | grep -q "2" && echo "✅ vector + pg_trgm" || echo "❌")
-	@printf "  Tables:      " && (docker exec supabase-db psql -U postgres -t -c "SELECT count(*) FROM information_schema.tables WHERE table_name IN ('documents','document_chunks');" 2>/dev/null | grep -q "2" && echo "✅ documents + document_chunks" || echo "❌")
-	@printf "  hybrid_search: " && (docker exec supabase-db psql -U postgres -t -c "SELECT count(*) FROM pg_proc WHERE proname='hybrid_search';" 2>/dev/null | grep -q "1" && echo "✅" || echo "❌")
+	@printf "  Extensions:  " && (docker exec postgres psql -U postgres -t -c "SELECT count(*) FROM pg_extension WHERE extname IN ('vector','pg_trgm');" 2>/dev/null | grep -q "2" && echo "✅ vector + pg_trgm" || echo "❌")
+	@printf "  Tables:      " && (docker exec postgres psql -U postgres -t -c "SELECT count(*) FROM information_schema.tables WHERE table_name IN ('documents','document_chunks');" 2>/dev/null | grep -q "2" && echo "✅ documents + document_chunks" || echo "❌")
+	@printf "  hybrid_search: " && (docker exec postgres psql -U postgres -t -c "SELECT count(*) FROM pg_proc WHERE proname='hybrid_search';" 2>/dev/null | grep -q "1" && echo "✅" || echo "❌")
 	@echo ""
 	@echo "── RAG Status ──"
 	@curl -s http://localhost:3100/status 2>/dev/null | python3 -m json.tool 2>/dev/null || echo "  ❌ Could not reach /status"

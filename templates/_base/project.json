@@ -7,5 +7,30 @@
     "match_threshold": 0.5,
     "chunk_size": 500,
     "chunk_overlap": 50
-  }
+  },
+  "foundation_skills": [
+    "event-storming",
+    "define-bounded-contexts",
+    "design-aggregates",
+    "model-domain-events",
+    "ubiquitous-language",
+    "ux-research-methods",
+    "design-system-setup"
+  ],
+  "skills_index": "_base/skills/INDEX.md",
+  "provides": [],
+  "consumes": [],
+  "capabilities": [],
+  "design_skills": [
+    "visual-design-principles",
+    "color-theory-and-systems",
+    "typography-system",
+    "layout-and-composition",
+    "ux-principles-and-patterns",
+    "ux-research-methods",
+    "design-system-setup",
+    "responsive-layout-patterns",
+    "accessibility-implementation",
+    "animation-and-motion"
+  ]
 }

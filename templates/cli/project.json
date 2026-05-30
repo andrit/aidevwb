@@ -2,5 +2,11 @@
   "type": "cli",
   "description": "Command-line tool or developer utility",
   "mcp_tools": ["rag_ingest", "rag_query", "project_test"],
-  "roadmap": "1. Define CLI interface (commands, flags, arguments)\n2. Implement core logic as testable functions\n3. Wire CLI parsing to core logic\n4. Error handling + help text\n5. Tests (unit for logic, integration for CLI)\n6. README with usage examples\n7. Package + publish"
+  "roadmap": "0. Foundation: ubiquitous-language (define command vocabulary, error message language, and domain concepts before implementation)\n1. Define CLI interface (commands, flags, arguments)\n2. Implement core logic as testable functions\n3. Wire CLI parsing to core logic\n4. Error handling + help text\n5. Tests (unit for logic, integration for CLI)\n6. README with usage examples\n7. Package + publish",
+  "skills": [
+    "add-subcommand",
+    "add-config-file",
+    "publish-package",
+    "cli-production-ux"
+  ]
 }

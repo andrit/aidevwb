@@ -1,0 +1,22 @@
+{
+  "name": "microservices",
+  "description": "Service decomposition — adds service mesh, inter-service comms, observability, and IaC to any distributed project",
+  "provides": ["rest_api", "service_mesh", "distributed_tracing", "infrastructure_as_code"],
+  "consumes": [],
+  "mcp_tools": [
+    "rag_ingest", "rag_query", "rag_status", "project_test",
+    "bus_publish", "bus_read"
+  ],
+  "skills": [
+    "add-new-service",
+    "setup-inter-service-comms",
+    "add-service-observability",
+    "production-readiness-review",
+    "add-terraform-module",
+    "deploy-new-environment",
+    "implement-outbox-pattern",
+    "cqrs-read-model",
+    "single-writer-principle"
+  ],
+  "seed_docs": []
+}

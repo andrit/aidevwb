@@ -1,0 +1,24 @@
+{
+  "name": "agent",
+  "description": "Autonomous agent loop — tool use, memory, evals, guardrails, and step-through debug for any project that needs AI reasoning",
+  "provides": ["agent_reasoning", "tool_use", "agent_memory", "agent_eval"],
+  "consumes": ["llm_api", "hybrid_search"],
+  "mcp_tools": [
+    "agent_remember", "agent_recall", "agent_forget", "agent_memories",
+    "agent_eval",
+    "debug_enable", "debug_pending", "debug_approve", "debug_reject"
+  ],
+  "skills": [
+    "add-agent-tool",
+    "write-agent-eval",
+    "add-guardrails",
+    "debug-agent-loop",
+    "connect-external-api",
+    "zero-trust-identity",
+    "design-hitl-checkpoints",
+    "setup-circuit-breakers",
+    "production-agent-deployment",
+    "llm-cost-and-rate-management"
+  ],
+  "seed_docs": []
+}

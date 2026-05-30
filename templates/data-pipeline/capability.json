@@ -1,0 +1,19 @@
+{
+  "name": "data-pipeline",
+  "description": "ETL / data processing — adds ingestion, transformation, and scheduling to any data-intensive project",
+  "provides": ["data_transform", "stream_processing", "incremental_load"],
+  "consumes": [],
+  "mcp_tools": [
+    "rag_ingest", "rag_query", "project_test",
+    "bus_publish", "bus_read"
+  ],
+  "skills": [
+    "add-pipeline-stage",
+    "idempotency-and-incremental-loads",
+    "pipeline-failure-recovery",
+    "evolve-pipeline-schema",
+    "setup-cdc-source",
+    "stream-vs-batch-decision"
+  ],
+  "seed_docs": []
+}

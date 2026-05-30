@@ -5,6 +5,7 @@ __pycache__/
 *.pyc
 .venv/
 rag_storage/
+docs/*
 documents/*
 !documents/.gitkeep
 workspace/*

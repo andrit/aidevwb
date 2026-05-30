@@ -20,20 +20,21 @@ services:
     stdin_open: true
     tty: true
     volumes:
-      - ${PROJECT_DIR:-./workspace}:/workspace
-      - claude-auth:/home/user/.claude
-      - ./configs/claude/commands:/workspace/.claude/commands:ro
-      - ./configs/claude/settings.json:/workspace/.claude/settings.json:ro
+      - ${PROJECT_DIR:-.}:/workspace
+      - claude-auth:/root/.claude
+      - ./configs/claude:/workspace/.claude:ro
       - ./configs/mcp/mcp-servers.json:/opt/mcp-servers.json:ro
       - ./documents:/workspace/documents
     environment:
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
-      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
-      - EMBEDDING_MODEL=${EMBEDDING_MODEL:-voyage/voyage-3}
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY:-}
+      - EMBEDDING_BASE_URL=${EMBEDDING_BASE_URL:-http://ollama:11434/v1}
+      - EMBEDDING_API_KEY=${EMBEDDING_API_KEY:-ollama}
+      - EMBEDDING_MODEL=${EMBEDDING_MODEL:-mxbai-embed-large}
       - EMBEDDING_DIMENSIONS=${EMBEDDING_DIMENSIONS:-1024}
       - CLAUDE_MODEL=${CLAUDE_MODEL:-claude-sonnet-4-20250514}
       - API_URL=http://mcp-server:3100
-      - WORKBENCH_PROJECT=${WORKBENCH_PROJECT:-}
+      - WORKBENCH_PROJECT=${WORKBENCH_PROJECT:-workbench-source}
     networks:
       - workbench
     depends_on:
@@ -58,13 +59,15 @@ services:
       - ./templates:/app/templates:ro
     environment:
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
-      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
-      - PG_HOST=supabase-db
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY:-}
+      - PG_HOST=postgres
       - PG_PORT=5432
       - PG_USER=postgres
       - PG_PASSWORD=${POSTGRES_PASSWORD}
       - PG_REGISTRY_DB=workbench
-      - EMBEDDING_MODEL=${EMBEDDING_MODEL:-voyage/voyage-3}
+      - EMBEDDING_BASE_URL=${EMBEDDING_BASE_URL:-http://ollama:11434/v1}
+      - EMBEDDING_API_KEY=${EMBEDDING_API_KEY:-ollama}
+      - EMBEDDING_MODEL=${EMBEDDING_MODEL:-mxbai-embed-large}
       - EMBEDDING_DIMENSIONS=${EMBEDDING_DIMENSIONS:-1024}
       - CLAUDE_MODEL=${CLAUDE_MODEL:-claude-sonnet-4-20250514}
       - REDIS_URL=${REDIS_URL:-redis://redis:6379}
@@ -74,9 +77,11 @@ services:
     networks:
       - workbench
     depends_on:
-      supabase-db:
+      postgres:
         condition: service_healthy
       redis:
+        condition: service_healthy
+      ollama:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "http://localhost:3100/health"]
@@ -99,13 +104,15 @@ services:
       - rag-storage:/app/rag_storage
     environment:
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
-      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
-      - PG_HOST=supabase-db
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY:-}
+      - PG_HOST=postgres
       - PG_PORT=5432
       - PG_USER=postgres
       - PG_PASSWORD=${POSTGRES_PASSWORD}
-      - SUPABASE_DB_URL=postgresql://postgres:${POSTGRES_PASSWORD}@supabase-db:5432/postgres
-      - EMBEDDING_MODEL=${EMBEDDING_MODEL:-voyage/voyage-3}
+      - SUPABASE_DB_URL=postgresql://postgres:${POSTGRES_PASSWORD}@postgres:5432/postgres
+      - EMBEDDING_BASE_URL=${EMBEDDING_BASE_URL:-http://ollama:11434/v1}
+      - EMBEDDING_API_KEY=${EMBEDDING_API_KEY:-ollama}
+      - EMBEDDING_MODEL=${EMBEDDING_MODEL:-mxbai-embed-large}
       - EMBEDDING_DIMENSIONS=${EMBEDDING_DIMENSIONS:-1024}
       - CLAUDE_MODEL=${CLAUDE_MODEL:-claude-sonnet-4-20250514}
       - REDIS_URL=${REDIS_URL:-redis://redis:6379}
@@ -114,27 +121,30 @@ services:
     networks:
       - workbench
     depends_on:
-      supabase-db:
+      postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
     command: ["python", "-m", "lib.worker"]
 
   # ═══════════════════════════════════════════════════════════
-  #  SUPABASE — Self-hosted PostgreSQL + pgvector + PostgREST
+  #  POSTGRES + pgvector — project databases with vector search
   # ═══════════════════════════════════════════════════════════
-  supabase-db:
-    image: supabase/postgres:15.6.1.143
-    container_name: supabase-db
+  # ═══════════════════════════════════════════════════════════
+  #  POSTGRES + pgvector — project databases with vector search
+  #  Standard Postgres 16 with pgvector extension.
+  #  No Supabase layer — direct postgres.js connections.
+  # ═══════════════════════════════════════════════════════════
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: postgres
     ports:
       - "5432:5432"
     environment:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
       POSTGRES_DB: postgres
-      JWT_SECRET: ${JWT_SECRET}
-      JWT_EXP: 3600
     volumes:
-      - supabase-db-data:/var/lib/postgresql/data
+      - postgres-data:/var/lib/postgresql/data
       - ./supabase/migrations:/docker-entrypoint-initdb.d
     networks:
       - workbench
@@ -144,38 +154,6 @@ services:
       timeout: 5s
       retries: 5
       start_period: 20s
-
-  supabase-rest:
-    image: postgrest/postgrest:v12.2.3
-    container_name: supabase-rest
-    environment:
-      PGRST_DB_URI: postgresql://postgres:${POSTGRES_PASSWORD:-postgres}@supabase-db:5432/postgres
-      PGRST_DB_SCHEMAS: public,storage
-      PGRST_DB_ANON_ROLE: anon
-      PGRST_JWT_SECRET: ${JWT_SECRET}
-      PGRST_DB_USE_LEGACY_GUCS: "false"
-    networks:
-      - workbench
-    depends_on:
-      supabase-db:
-        condition: service_healthy
-
-  supabase-kong:
-    image: kong:2.8.1
-    container_name: supabase-kong
-    ports:
-      - "8000:8000"
-    environment:
-      KONG_DATABASE: "off"
-      KONG_DECLARATIVE_CONFIG: /var/lib/kong/kong.yml
-      KONG_DNS_ORDER: LAST,A,CNAME
-      KONG_PLUGINS: request-transformer,cors,key-auth,acl,basic-auth
-    volumes:
-      - ./configs/supabase/kong.yml:/var/lib/kong/kong.yml:ro
-    networks:
-      - workbench
-    depends_on:
-      - supabase-rest
 
   # ═══════════════════════════════════════════════════════════
   #  REDIS — Job queue (BullMQ) + caching
@@ -239,43 +217,27 @@ services:
       - tempo
 
   # ═══════════════════════════════════════════════════════════
-  #  SUPABASE STUDIO — Web UI for database management
-  #  Optional: docker compose --profile studio up -d
+  #  OLLAMA — Local embedding model (mxbai-embed-large, 1024 dims)
+  #  No API key or cloud account required.
+  #  To use Voyage AI instead: set EMBEDDING_BASE_URL + EMBEDDING_API_KEY in .env
+  #  and remove the ollama dependency from mcp-server / rag-worker.
   # ═══════════════════════════════════════════════════════════
-  supabase-studio:
-    image: supabase/studio:20240422-5cf8f30
-    container_name: supabase-studio
-    profiles: ["studio"]
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
     ports:
-      - "3001:3000"
-    environment:
-      STUDIO_PG_META_URL: http://supabase-meta:8080
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
-      SUPABASE_URL: http://supabase-kong:8000
-      SUPABASE_REST_URL: http://supabase-kong:8000/rest/v1/
-      SUPABASE_ANON_KEY: ${ANON_KEY}
-      SUPABASE_SERVICE_KEY: ${SERVICE_ROLE_KEY}
+      - "11434:11434"
+    volumes:
+      - ollama-models:/root/.ollama
     networks:
       - workbench
-    depends_on:
-      - supabase-meta
-
-  supabase-meta:
-    image: supabase/postgres-meta:v0.80.0
-    container_name: supabase-meta
-    profiles: ["studio"]
-    environment:
-      PG_META_PORT: 8080
-      PG_META_DB_HOST: supabase-db
-      PG_META_DB_PORT: 5432
-      PG_META_DB_NAME: postgres
-      PG_META_DB_USER: postgres
-      PG_META_DB_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
-    networks:
-      - workbench
-    depends_on:
-      supabase-db:
-        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 60s
+    entrypoint: ["/bin/sh", "-c", "ollama serve & sleep 5 && ollama pull ${EMBEDDING_MODEL:-mxbai-embed-large} && wait"]
 
   # ═══════════════════════════════════════════════════════════
   #  NEO4J — Graph database for GraphRAG
@@ -298,12 +260,13 @@ services:
 
 volumes:
   claude-auth:
-  supabase-db-data:
+  postgres-data:
   redis-data:
   rag-storage:
   tempo-data:
   grafana-data:
   neo4j-data:
+  ollama-models:
 
 networks:
   workbench:

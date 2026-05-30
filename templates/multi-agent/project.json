@@ -7,5 +7,13 @@
     "conversation_create", "conversation_list", "conversation_get", "conversation_append",
     "bus_publish", "bus_read", "bus_channels"
   ],
-  "roadmap": "1. Define the team: how many agents, what roles\n2. Choose an orchestration pattern (sequential, parallel, hierarchical, consensus)\n3. Implement each agent as an async function\n4. Wire agents into the pattern\n5. Test with the message bus (observe inter-agent communication)\n6. Add memory for cross-session state\n7. Monitor with the Agent Trace Viewer in Grafana\n8. Tune: adjust roles, prompts, delegation logic\n9. Ship"
+  "roadmap": "0. Foundation: event-storming → define-bounded-contexts → model-domain-events → ubiquitous-language (map domain events to agent roles and inter-agent messages before coding)\n1. Define the team: how many agents, what roles\n2. Choose an orchestration pattern (sequential, parallel, hierarchical, consensus)\n3. Implement each agent as an async function\n4. Wire agents into the pattern\n5. Test with the message bus (observe inter-agent communication)\n6. Add memory for cross-session state\n7. Monitor with the Agent Trace Viewer in Grafana\n8. Tune: adjust roles, prompts, delegation logic\n9. Ship",
+  "skills": [
+    "skills/add-agent-role",
+    "skills/switch-orchestration-pattern",
+    "skills/debug-inter-agent-comms",
+    "skills/run-multi-agent-eval",
+    "skills/production-multi-agent-deployment",
+    "skills/multi-agent-failure-handling"
+  ]
 }

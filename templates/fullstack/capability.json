@@ -1,0 +1,20 @@
+{
+  "name": "fullstack",
+  "description": "REST API + frontend + database — adds web interface, auth, and persistence to any project",
+  "provides": ["rest_api", "web_interface", "user_auth", "relational_store"],
+  "consumes": [],
+  "mcp_tools": [
+    "rag_ingest", "rag_query", "rag_status", "project_test"
+  ],
+  "skills": [
+    "add-api-endpoint",
+    "add-database-table",
+    "add-authentication",
+    "write-integration-tests",
+    "error-handling-middleware",
+    "production-config-and-secrets",
+    "setup-health-and-observability",
+    "security-hardening"
+  ],
+  "seed_docs": []
+}

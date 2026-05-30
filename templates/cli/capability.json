@@ -1,0 +1,16 @@
+{
+  "name": "cli",
+  "description": "Command-line interface — adds a user-facing CLI to any project",
+  "provides": ["cli_interface"],
+  "consumes": [],
+  "mcp_tools": [
+    "rag_ingest", "rag_query", "project_test"
+  ],
+  "skills": [
+    "add-subcommand",
+    "add-config-file",
+    "publish-package",
+    "cli-production-ux"
+  ],
+  "seed_docs": []
+}

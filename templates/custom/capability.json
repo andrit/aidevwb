@@ -1,0 +1,19 @@
+{
+  "name": "custom",
+  "description": "All workbench tools, no type-specific guidance — full access to RAG, memory, conversations, bus, debug, and eval",
+  "provides": [],
+  "consumes": [],
+  "mcp_tools": [
+    "rag_ingest", "rag_query", "rag_status", "rag_reindex", "rag_eval",
+    "agent_remember", "agent_recall", "agent_forget", "agent_memories",
+    "conversation_create", "conversation_list", "conversation_get", "conversation_append",
+    "bus_publish", "bus_read", "bus_channels",
+    "debug_enable", "debug_pending", "debug_approve", "debug_reject",
+    "agent_eval", "project_test"
+  ],
+  "skills": [
+    "setup-project-structure",
+    "add-mcp-tool-integration"
+  ],
+  "seed_docs": []
+}

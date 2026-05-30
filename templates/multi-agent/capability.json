@@ -1,0 +1,22 @@
+{
+  "name": "multi-agent",
+  "description": "Coordinated agent teams — orchestration patterns, message bus, inter-agent trust, and team-level evals",
+  "provides": ["multi_agent_coord", "message_bus", "agent_reasoning", "agent_eval"],
+  "consumes": ["llm_api", "hybrid_search"],
+  "mcp_tools": [
+    "agent_remember", "agent_recall", "agent_forget", "agent_memories",
+    "bus_publish", "bus_read", "bus_channels",
+    "debug_enable", "debug_pending", "debug_approve", "debug_reject",
+    "agent_eval"
+  ],
+  "skills": [
+    "add-agent-role",
+    "switch-orchestration-pattern",
+    "debug-inter-agent-comms",
+    "run-multi-agent-eval",
+    "inter-agent-trust-policy",
+    "multi-agent-failure-handling",
+    "production-multi-agent-deployment"
+  ],
+  "seed_docs": []
+}

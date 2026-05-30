@@ -2,5 +2,31 @@
   "type": "fullstack",
   "description": "Full-stack web application",
   "mcp_tools": ["rag_ingest", "rag_query", "rag_status", "project_test"],
-  "roadmap": "1. Scaffold project structure\n2. Database schema design\n3. API routes (CRUD)\n4. Frontend pages / components\n5. Authentication\n6. Tests (unit + integration)\n7. Deploy"
+  "roadmap": "0. Foundation: event-storming → define-bounded-contexts → design-aggregates → model-domain-events → ubiquitous-language (run before writing any code)\n1. Scaffold project structure\n2. Database schema design\n3. API routes (CRUD)\n4. Frontend pages / components\n5. Authentication\n6. Tests (unit + integration)\n7. Deploy",
+  "skills": [
+    "skills/storybook-setup",
+    "skills/component-types",
+    "skills/state-solutions",
+    "skills/component-testing",
+    "skills/add-api-endpoint",
+    "skills/add-database-table",
+    "skills/add-authentication",
+    "skills/write-integration-tests",
+    "skills/error-handling-middleware",
+    "skills/production-config-and-secrets",
+    "skills/setup-health-and-observability",
+    "skills/security-hardening"
+  ],
+  "design_skills": [
+    "_base/skills/visual-design-principles",
+    "_base/skills/color-theory-and-systems",
+    "_base/skills/typography-system",
+    "_base/skills/layout-and-composition",
+    "_base/skills/ux-principles-and-patterns",
+    "_base/skills/ux-research-methods",
+    "_base/skills/design-system-setup",
+    "_base/skills/responsive-layout-patterns",
+    "_base/skills/accessibility-implementation",
+    "_base/skills/animation-and-motion"
+  ]
 }

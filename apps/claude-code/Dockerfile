@@ -1,15 +1,21 @@
 # ═══════════════════════════════════════════════════════════
 # Claude Code container with Python toolchain + MCP bridge
-# Base: official Anthropic image (Node.js + Claude Code CLI)
+# Base: Node.js + Claude Code CLI (installed from public npm)
 # Added: Python 3.12, MCP bridge for workbench tools
 # ═══════════════════════════════════════════════════════════
-FROM ghcr.io/anthropics/claude-code:latest
+FROM node:22-slim
+
+# Install Claude Code from the public npm registry
+RUN npm install -g @anthropic-ai/claude-code
+
+# Create non-root user matching the original image convention
+RUN useradd -m -s /bin/bash user
 
 USER root
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    python3.12 \
-    python3.12-venv \
+    python3 \
+    python3-venv \
     python3-pip \
     curl \
     wget \

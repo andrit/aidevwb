@@ -13,12 +13,16 @@ export const config = {
   claudeModel: env("CLAUDE_MODEL", "claude-sonnet-4-20250514"),
 
   // ── Embeddings ─────────────────────────────────────────
-  openrouterApiKey: env("OPENROUTER_API_KEY"),
-  embeddingModel: env("EMBEDDING_MODEL", "voyage/voyage-3"),
+  // Provider-agnostic: any OpenAI-compatible embeddings endpoint.
+  // Defaults to local Ollama. Switch to Voyage AI, OpenRouter, etc. via env.
+  openrouterApiKey: env("OPENROUTER_API_KEY", ""),
+  embeddingBaseUrl: env("EMBEDDING_BASE_URL", "http://ollama:11434/v1"),
+  embeddingApiKey: env("EMBEDDING_API_KEY", "ollama"),
+  embeddingModel: env("EMBEDDING_MODEL", "mxbai-embed-large"),
   embeddingDimensions: parseInt(env("EMBEDDING_DIMENSIONS", "1024")),
 
   // ── PostgreSQL (direct, not through PostgREST) ─────────
-  pgHost: env("PG_HOST", "supabase-db"),
+  pgHost: env("PG_HOST", "postgres"),
   pgPort: parseInt(env("PG_PORT", "5432")),
   pgUser: env("PG_USER", "postgres"),
   pgPassword: env("PG_PASSWORD", env("POSTGRES_PASSWORD", "")),

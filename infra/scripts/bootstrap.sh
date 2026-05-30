@@ -142,6 +142,26 @@ else
   warn "Redis not ready yet"
 fi
 
+# ── Step 6: Register workbench source as default project ────
+echo ""
+echo -e "${CYAN}═══ Step 6/6: Registering Workbench Project ═══${NC}"
+
+# Auto-register the workbench source directory as "workbench-source".
+# This is the project whose database captures the history of building
+# the workbench itself — RAG ingests, memories, conversations.
+# Idempotent: silently succeeds if already registered.
+
+REGISTER_RESULT=$(curl -s -o /dev/null -w "%{http_code}" \
+  -X POST http://localhost:${API_PORT:-3100}/scaffold \
+  -H "Content-Type: application/json" \
+  -d '{"name":"workbench-source","directory":".","type":"custom"}' 2>/dev/null)
+
+if [ "$REGISTER_RESULT" = "200" ] || [ "$REGISTER_RESULT" = "201" ] || [ "$REGISTER_RESULT" = "409" ]; then
+  ok "Project 'workbench-source' registered (history of workbench development)"
+else
+  warn "Could not register 'workbench-source' project (HTTP $REGISTER_RESULT) — run 'make project NAME=workbench-source DIR=. TYPE=custom' manually"
+fi
+
 # ── Done ─────────────────────────────────────────────────
 echo ""
 echo -e "${GREEN}╔══════════════════════════════════════════════════╗${NC}"
@@ -168,6 +188,11 @@ echo -e "${GREEN}║  Inside Claude Code:                             ║${NC}"
 echo -e "${GREEN}║    /status  — knowledgebase stats                ║${NC}"
 echo -e "${GREEN}║    /ingest documents/file.txt                    ║${NC}"
 echo -e "${GREEN}║    /query What is the refund policy?             ║${NC}"
+echo -e "${GREEN}║                                                  ║${NC}"
+echo -e "${GREEN}║  Active project: workbench-source (default)      ║${NC}"
+echo -e "${GREEN}║  Switch projects:                                ║${NC}"
+echo -e "${GREEN}║    WORKBENCH_PROJECT=myapp PROJECT_DIR=~/myapp \ ║${NC}"
+echo -e "${GREEN}║    docker compose up -d claude-code              ║${NC}"
 echo -e "${GREEN}║                                                  ║${NC}"
 echo -e "${GREEN}╚══════════════════════════════════════════════════╝${NC}"
 echo ""

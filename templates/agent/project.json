@@ -6,5 +6,14 @@
     "agent_remember", "agent_recall", "agent_forget", "agent_memories",
     "conversation_create", "conversation_list", "conversation_get", "conversation_append"
   ],
-  "roadmap": "1. Define the agent's purpose and capabilities\n2. Design the tool set (what can the agent do?)\n3. Write the system prompt\n4. Implement tool functions\n5. Build the agent loop (or use a framework)\n6. Add memory for cross-session state\n7. Test with sample conversations\n8. Add guardrails and safety boundaries\n9. Instrument with OTel traces\n10. Ship"
+  "roadmap": "0. Foundation: event-storming → define-bounded-contexts → model-domain-events → ubiquitous-language (establish agent vocabulary and event model before coding)\n1. Define the agent's purpose and capabilities\n2. Design the tool set (what can the agent do?)\n3. Write the system prompt\n4. Implement tool functions\n5. Build the agent loop (or use a framework)\n6. Add memory for cross-session state\n7. Test with sample conversations\n8. Add guardrails and safety boundaries\n9. Instrument with OTel traces\n10. Ship",
+  "skills": [
+    "skills/add-agent-tool",
+    "skills/write-agent-eval",
+    "skills/add-guardrails",
+    "skills/debug-agent-loop",
+    "skills/connect-external-api",
+    "skills/production-agent-deployment",
+    "skills/llm-cost-and-rate-management"
+  ]
 }
